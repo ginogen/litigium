@@ -64,11 +64,18 @@ export interface DocumentProcessingStatus {
 
 // Configuración base de Axios
 const getBaseURL = () => {
-  // Detectar si estamos en producción de manera más compatible
-  const isProduction = process.env.NODE_ENV === 'production' || 
+  // Si hay una URL específica de API definida, usarla
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Detectar si estamos en producción
+  const isProduction = import.meta.env.PROD || 
+                      process.env.NODE_ENV === 'production' || 
                       window.location.hostname !== 'localhost';
   
   if (isProduction) {
+    // En producción, intentar usar el mismo dominio
     return window.location.origin;
   }
   // En desarrollo, usar localhost

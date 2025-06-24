@@ -13,13 +13,19 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: '0.0.0.0', // Para Railway
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
-        secure: false,
+        secure: true, // Para HTTPS en Railway
+        ws: true, // WebSocket support
       }
     }
+  },
+  preview: {
+    port: parseInt(process.env.PORT || '3000'),
+    host: '0.0.0.0', // Para Railway
   },
   build: {
     outDir: 'dist',

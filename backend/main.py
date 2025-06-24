@@ -38,17 +38,22 @@ app = FastAPI(
 )
 
 # Configurar CORS para Railway
+allowed_origins = [
+    "http://localhost:3000", 
+    "http://localhost:5173",
+    "https://*.vercel.app",
+    "https://*.railway.app",
+    "https://*.up.railway.app",
+    os.getenv("FRONTEND_URL", ""),
+    os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
+]
+
+# Filtrar orígenes vacíos
+allowed_origins = [origin for origin in allowed_origins if origin]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000", 
-        "http://localhost:5173",
-        "https://*.vercel.app",
-        "https://*.railway.app",
-        "https://*.up.railway.app",
-        os.getenv("FRONTEND_URL", ""),
-        os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
