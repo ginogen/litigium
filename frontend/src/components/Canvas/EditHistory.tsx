@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { EditHistoryItem } from '@/lib/index.ts';
+import { EditHistoryItem } from '@/lib/api';
 import { cn, formatTime, getOperationIcon } from '@/lib/utils';
 
 interface EditHistoryProps {

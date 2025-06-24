@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryAPI, Category, annotationAPI, templateAPI, enhancedAnalysisAPI } from '@/lib/index.ts';
+import { categoryAPI, Category, annotationAPI, templateAPI, enhancedAnalysisAPI } from '@/lib/api';
 import { googleDriveAPI } from '@/lib/google-drive-api';
 import { Annotation, AnnotationTemplate, Document } from '../../types/annotation';
 import { cn } from '@/lib/utils';

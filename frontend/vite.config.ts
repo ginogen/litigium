@@ -7,26 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
-      {
-        find: '@/lib',
-        replacement: resolve(__dirname, 'src/lib')
-      },
-      {
-        find: '@',
-        replacement: resolve(__dirname, 'src')
-      },
-      {
-        find: '@/contexts',
-        replacement: resolve(__dirname, 'src/contexts')
-      },
-      {
-        find: '@/components',
-        replacement: resolve(__dirname, 'src/components')
-      },
-      {
-        find: '@/types',
-        replacement: resolve(__dirname, 'src/types')
-      }
+      { find: '@', replacement: resolve(__dirname, 'src') }
     ],
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },

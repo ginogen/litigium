@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode, useCallback } from 'react';
-import { chatAPI, categoryAPI, Category } from '@/lib/index.ts';
+import { chatAPI, categoryAPI, Category } from '@/lib/api';
 
 // Tipos
 export interface Message {
