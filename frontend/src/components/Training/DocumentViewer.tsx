@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { categoryAPI } from '@/lib';
+import { categoryAPI } from '@/lib/index';
 import { 
   X, 
   Download, 

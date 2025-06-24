@@ -23,37 +23,20 @@ function processDirectory(dir) {
 function processFile(filePath) {
   try {
     let content = fs.readFileSync(filePath, 'utf8');
-    let modified = false;
+    let originalContent = content;
     
-    // Reemplazar importaciones problemáticas con paths absolutos
-    const replacements = [
-      // Importaciones estáticas
-      { from: /from ['"]\.\.\/lib['"];?/g, to: "from '@/lib';" },
-      { from: /from ['"]\.\.\/\.\.\/lib['"];?/g, to: "from '@/lib';" },
-      { from: /from ['"]\.\.\/lib\/([^'"]+)['"];?/g, to: "from '@/lib/$1';" },
-      { from: /from ['"]\.\.\/\.\.\/lib\/([^'"]+)['"];?/g, to: "from '@/lib/$1';" },
-      
-      // Importaciones dinámicas (await import)
-      { from: /await import\(['"]\.\.\/lib['"]\)/g, to: "await import('@/lib')" },
-      { from: /await import\(['"]\.\.\/\.\.\/lib['"]\)/g, to: "await import('@/lib')" },
-      { from: /await import\(['"]\.\.\/lib\/([^'"]+)['"]\)/g, to: "await import('@/lib/$1')" },
-      { from: /await import\(['"]\.\.\/\.\.\/lib\/([^'"]+)['"]\)/g, to: "await import('@/lib/$1')" },
-      
-      // Importaciones dinámicas (import())
-      { from: /import\(['"]\.\.\/lib['"]\)/g, to: "import('@/lib')" },
-      { from: /import\(['"]\.\.\/\.\.\/lib['"]\)/g, to: "import('@/lib')" },
-      { from: /import\(['"]\.\.\/lib\/([^'"]+)['"]\)/g, to: "import('@/lib/$1')" },
-      { from: /import\(['"]\.\.\/\.\.\/lib\/([^'"]+)['"]\)/g, to: "import('@/lib/$1')" },
-    ];
+    // Convertir importaciones relativas a absolutas explícitas
+    content = content.replace(/from ['"](\.\.\/)+lib['"]/g, "from '@/lib/index'");
+    content = content.replace(/from ['"](\.\.\/)+lib\/([^'"]+)['"]/g, "from '@/lib/$2'");
     
-    replacements.forEach(({ from, to }) => {
-      if (from.test(content)) {
-        content = content.replace(from, to);
-        modified = true;
-      }
-    });
-    
-    if (modified) {
+    // Convertir importaciones de @/lib a @/lib/index
+    content = content.replace(/from ['"]@\/lib['"]/g, "from '@/lib/index'");
+
+    // Convertir importaciones dinámicas también
+    content = content.replace(/import\(['"](\.\.\/)+lib['"]\)/g, "import('@/lib/index')");
+    content = content.replace(/import\(['"]@\/lib['"]\)/g, "import('@/lib/index')");
+
+    if (content !== originalContent) {
       fs.writeFileSync(filePath, content, 'utf8');
       console.log(`✅ Procesado: ${filePath}`);
     }

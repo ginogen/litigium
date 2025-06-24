@@ -1,7 +1,7 @@
 import { createContext, useContext, useCallback, ReactNode } from 'react';
 import { supabase } from './AuthContext';
 import { useAuth } from './AuthContext';
-import { chatAPI } from '@/lib';
+import { chatAPI } from '@/lib/index';
 
 // Tipos basados en tu esquema de Supabase (UUID)
 export interface ChatSession {
