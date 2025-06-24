@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '../../lib/utils';
+import { categoryAPI } from '../../lib/api';
 import { 
   X, 
   Download, 
@@ -107,8 +108,6 @@ export function DocumentViewer({
       setIsLoading(true);
       setError(null);
 
-      const { categoryAPI } = await import('../../lib/api');
-      
       // Intentar cargar con formato rico primero, luego fallback a plano
       const targetFormat = hasRichFormat ? formatType : (formatType === 'html' ? 'html' : 'plain');
       const response = await categoryAPI.obtenerContenidoDocumento(document.id, targetFormat);
