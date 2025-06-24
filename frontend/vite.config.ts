@@ -12,6 +12,7 @@ export default defineConfig({
       "@/": path.resolve(__dirname, "./src/"),
       "~": path.resolve(__dirname, "./src"),
     },
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   server: {
     port: 3000,
