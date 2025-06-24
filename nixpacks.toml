@@ -3,8 +3,8 @@
 NIXPACKS_PYTHON_VERSION = "3.12"
 PYTHONPATH = "."
 
-# Providers como array
-providers = ["python", "node"]
+# Providers como string separado por comas
+providers = "python,node"
 
 # Fases de build
 [phases.setup]
@@ -12,13 +12,13 @@ nixPkgs = ["python312", "nodejs-18_x", "npm"]
 
 [phases.install] 
 cmds = [
-    "npm install",
+    "cd frontend && npm install",
     "python3 -m pip install --upgrade pip",
     "python3 -m pip install -r requirements.txt"
 ]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["cd frontend && npm run build"]
 
 [phases.start]
 cmd = "python3 -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT" 
