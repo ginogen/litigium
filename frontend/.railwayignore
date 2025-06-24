@@ -1,42 +1,33 @@
-# Ignorar backend para el servicio frontend
+# Archivos y directorios a ignorar para el servicio FRONTEND
+# Solo servir archivos del directorio frontend/
+
+# Ignorar todos los archivos Python y backend
+*.py
 backend/
-backend/**
 rag/
 ingestion/
-*.py
+__pycache__/
+*.pyc
 
-# Ignorar archivos de la raíz del proyecto
-app.py
+# Ignorar archivos de configuración de la raíz
 main.py
-requirements.txt
-Procfile
-railway.toml
-build.sh
+app.py
 run.py
+requirements.txt
 
-# Ignorar documentos y datos
-ejemplos_demandas/
+# Ignorar datos y documentos
 data/
+ejemplos_demandas/
 temp/
 
-# Ignorar archivos de desarrollo
+# Ignorar logs y archivos temporales
 *.log
-.env.local
-.env.development
-.env.test
+*.tmp
+*.temp
 .DS_Store
 
-# Ignorar archivos de build (excepto el dist que necesitamos)
+# Ignorar directorios de build
 node_modules/
 .next/
 .nuxt/
-.output/
-.vercel/
-
-# Ignorar archivos temporales
-*.tmp
-*.temp
-
-# Ignorar documentación no relevante para el frontend
-*.md
-!README.md 
+.vercel/ 

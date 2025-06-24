@@ -10,4 +10,7 @@ restartPolicyMaxRetries = 10
 
 [env]
 NODE_ENV = "production"
-VITE_NODE_ENV = "production" 
+VITE_NODE_ENV = "production"
+
+[nixpacks]
+package = "nodejs" 
