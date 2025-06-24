@@ -1,0 +1,27 @@
+# Test files
+test_*.py
+debug_*.py
+*_test.py
+
+# Development scripts
+install_*.py
+apply_*.py
+restaurar_*.py
+instalar_*.py
+
+# Temporary files
+temp/
+*.pyc
+__pycache__/
+
+# Documentation
+*.md
+!README.md
+
+# Frontend source (only built version needed)
+frontend/src/
+frontend/node_modules/
+
+# Development configs
+.env.local
+.env.development 
