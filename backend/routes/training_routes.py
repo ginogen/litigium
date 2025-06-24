@@ -889,7 +889,7 @@ async def get_document_content(
             # Convertir formato rico a HTML
             try:
                 # Importar procesador de formato rico
-                from backend.core.document_processor_rich_format import rich_format_processor
+                from ..core.document_processor_rich_format import rich_format_processor
                 
                 html_content = rich_format_processor.rich_content_to_html(document["contenido_rico"])
                 document_data["contenido"] = html_content
@@ -1113,7 +1113,7 @@ async def update_document_vectorization_with_annotations(
     
     try:
         from supabase_integration import supabase_admin
-        from backend.core.document_processor import DocumentProcessor
+        from ..core.document_processor import DocumentProcessor
         
         print(f"🔄 Iniciando re-vectorización de documento {document_id} por {operation}")
         

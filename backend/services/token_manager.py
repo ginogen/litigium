@@ -18,9 +18,9 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 
 try:
-    from backend.config import settings
+    from ..config import settings
 except ImportError:
-    from config import settings
+    from ..config import settings
 
 
 class TokenManager:

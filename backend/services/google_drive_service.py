@@ -18,9 +18,9 @@ from google.oauth2.credentials import Credentials
 
 from .token_manager import token_manager
 try:
-    from backend.config import settings
+    from ..config import settings
 except ImportError:
-    from config import settings
+    from ..config import settings
 
 
 class GoogleDriveService:

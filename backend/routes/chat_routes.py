@@ -245,7 +245,7 @@ async def iniciar_chat(current_user: User = Depends(get_current_user)):
         # VERIFICAR CATEGORÍAS PRIMERO
         print("🔍 Verificando categorías disponibles...")
         try:
-            from core.category_manager import CategoryManager
+            from ..core.category_manager import CategoryManager
             category_manager = CategoryManager()
             
             # Obtener categorías del usuario
@@ -1156,8 +1156,8 @@ async def verificar_categorias_disponibles(
     """Verifica si el usuario tiene categorías disponibles para crear conversaciones."""
     try:
         # Importar CategoryManager y DocumentProcessor
-        from core.category_manager import CategoryManager
-        from core.document_processor import DocumentProcessor
+        from ..core.category_manager import CategoryManager
+        from ..core.document_processor import DocumentProcessor
         
         category_manager = CategoryManager()
         doc_processor = DocumentProcessor()

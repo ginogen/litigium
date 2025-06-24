@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
-from models.user import User
+from ..models.user import User
 
 load_dotenv()
 
