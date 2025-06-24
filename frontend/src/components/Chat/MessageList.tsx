@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Message } from '../../contexts/ChatContext';
 import { useChat } from '../../contexts/ChatContext';
 import { useCanvas } from '../../contexts/CanvasContext';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 
 interface MessageListProps {
   messages: Message[];

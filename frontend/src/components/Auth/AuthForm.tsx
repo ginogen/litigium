@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export function AuthForm() {

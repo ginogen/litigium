@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useCanvas } from '../../contexts/CanvasContext';
 import { useChat } from '../../contexts/ChatContext';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 import { ZoomIn, ZoomOut, FileText, Download, X, Plus, MessageSquare, CloudUpload, Globe } from 'lucide-react';
 import { GoogleDriveFolderPicker } from './GoogleDriveFolderPicker';
 import { GlobalEditPanel } from './GlobalEditPanel';

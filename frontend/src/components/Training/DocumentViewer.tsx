@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 import { categoryAPI } from '@/lib/api';
 import { 
   X, 
