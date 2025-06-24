@@ -25,17 +25,19 @@ function processFile(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     let originalContent = content;
     
-    // Convertir importaciones relativas a absolutas explícitas
-    content = content.replace(/from ['"](\.\.\/)+lib['"]/g, "from '@/lib/index'");
-    content = content.replace(/from ['"](\.\.\/)+lib\/([^'"]+)['"]/g, "from '@/lib/$2'");
+    // Regla 1: Convertir importaciones relativas de /lib/ a @/lib/index.ts
+    content = content.replace(/from ['"](\.\.\/)+lib['"]/g, "from '@/lib/index.ts'");
     
-    // Convertir importaciones de @/lib a @/lib/index
-    content = content.replace(/from ['"]@\/lib['"]/g, "from '@/lib/index'");
+    // Regla 2: Convertir importaciones de @/lib a @/lib/index.ts
+    content = content.replace(/from ['"]@\/lib['"]/g, "from '@/lib/index.ts'");
 
-    // Convertir importaciones dinámicas también
-    content = content.replace(/import\(['"](\.\.\/)+lib['"]\)/g, "import('@/lib/index')");
-    content = content.replace(/import\(['"]@\/lib['"]\)/g, "import('@/lib/index')");
+    // Regla 3: Convertir importaciones de @/lib/index (sin extensión) a @/lib/index.ts
+    content = content.replace(/from ['"]@\/lib\/index['"]/g, "from '@/lib/index.ts'");
 
+    // Regla 4: Convertir importaciones dinámicas también
+    content = content.replace(/import\(['"]@\/lib['"]\)/g, "import('@/lib/index.ts')");
+    content = content.replace(/import\(['"]@\/lib\/index['"]\)/g, "import('@/lib/index.ts')");
+    
     if (content !== originalContent) {
       fs.writeFileSync(filePath, content, 'utf8');
       console.log(`✅ Procesado: ${filePath}`);

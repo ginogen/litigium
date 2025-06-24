@@ -16,7 +16,7 @@ import {
   Calendar,
   Folder
 } from 'lucide-react';
-import { categoryAPI } from '@/lib/index';
+import { categoryAPI } from '@/lib/index.ts';
 import { DocumentSkeleton } from '../ui/Skeleton';
 
 interface Document {
