@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { EditHistoryItem } from '../../lib/api';
+import { EditHistoryItem } from '../../lib';
 import { cn, formatTime, getOperationIcon } from '../../lib/utils';
 
 interface EditHistoryProps {

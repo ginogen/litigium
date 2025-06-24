@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryAPI, Category, CategoryCreate, CategoryUpdate, CategoryStats } from '../../lib/api';
+import { categoryAPI, Category, CategoryCreate, CategoryUpdate, CategoryStats } from '../../lib';
 import { cn } from '../../lib/utils';
 import { Plus, Edit, Trash2, Search, Folder, Users, FileText, Settings, Target, AlertCircle } from 'lucide-react';
 import { CategorySkeleton } from '../ui/Skeleton';
