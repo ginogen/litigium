@@ -87,6 +87,34 @@ if os.path.exists(frontend_dist_path):
         # Si no existe, servir index.html (SPA routing)
         return FileResponse(os.path.join(frontend_dist_path, "index.html"))
 
+# Ruta principal (página de inicio)
+@app.get("/")
+async def root():
+    return {
+        "message": "🏛️ Legal Assistant AI - Backend",
+        "status": "running",
+        "version": "1.0.0",
+        "endpoints": {
+            "api_docs": "/docs",
+            "health_check": "/health",
+            "chat_api": "/api/chat/",
+            "training_api": "/api/training/",
+            "documents_api": "/api/documents/",
+            "editor_api": "/api/editor/",
+            "audio_api": "/api/audio/"
+        },
+        "description": "Sistema inteligente para la generación y edición de demandas legales con IA",
+        "features": [
+            "Chat inteligente con IA especializada en derecho",
+            "Generación automática de demandas",
+            "Edición granular de documentos",
+            "Sistema de entrenamiento personalizado",
+            "Procesamiento de audio y transcripción",
+            "Integración con Google Drive",
+            "Gestión de carpetas y sesiones"
+        ]
+    }
+
 # Ruta de salud
 @app.get("/health")
 async def health_check():
