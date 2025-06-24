@@ -18,6 +18,11 @@ __pycache__/
 *.md
 !README.md
 
+# Node.js files from root (frontend only)
+package.json.disabled
+node_modules/
+package-lock.json
+
 # Frontend source (only built version needed)
 frontend/src/
 frontend/node_modules/
