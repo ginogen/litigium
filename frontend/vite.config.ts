@@ -26,6 +26,7 @@ export default defineConfig({
   preview: {
     port: parseInt(process.env.PORT || '3000'),
     host: '0.0.0.0', // Para Railway
+    allowedHosts: ['all'], // Permitir todos los hosts para Railway
   },
   build: {
     outDir: 'dist',

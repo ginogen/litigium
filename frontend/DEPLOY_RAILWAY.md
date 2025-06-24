@@ -9,7 +9,7 @@
 4. Selecciona el repositorio y configura:
    - **Root Directory**: `frontend`
    - **Build Command**: `npm ci && npm run build`
-   - **Start Command**: `npm run preview -- --host 0.0.0.0 --port $PORT`
+   - **Start Command**: `npm run serve`
 
 ### 2. Configurar variables de entorno
 
