@@ -6,8 +6,8 @@ import os
 import tempfile
 from datetime import datetime
 
-from auth.dependencies import get_current_user
-from models.user import User
+from ..auth.dependencies import get_current_user
+from ..models.user import User
 from supabase_integration import supabase
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])

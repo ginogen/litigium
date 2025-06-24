@@ -9,10 +9,10 @@ import uuid
 from datetime import datetime
 import hashlib
 
-from core.document_processor import DocumentProcessor
-from core.category_manager import CategoryManager
-from auth.dependencies import get_current_user
-from models.user import User
+from ..core.document_processor import DocumentProcessor
+from ..core.category_manager import CategoryManager
+from ..auth.dependencies import get_current_user
+from ..models.user import User
 
 router = APIRouter(prefix="/api/training", tags=["training"])
 

@@ -10,15 +10,15 @@ from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 import uuid
 
-from auth.dependencies import get_current_user
-from models.user import User
-from services.google_drive_service import google_drive_service
-from services.token_manager import token_manager
-from routes.training_routes import process_document_background
+from ..auth.dependencies import get_current_user
+from ..models.user import User
+from ..services.google_drive_service import google_drive_service
+from ..services.token_manager import token_manager
+from .training_routes import process_document_background
 try:
-    from backend.config import settings
+    from ..config import settings
 except ImportError:
-    from config import settings
+    from ..config import settings
 
 router = APIRouter(prefix="/api/google-drive", tags=["google-drive"])
 

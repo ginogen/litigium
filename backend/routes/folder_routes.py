@@ -9,8 +9,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from auth.dependencies import get_current_user
-from models.user import User
+from ..auth.dependencies import get_current_user
+from ..models.user import User
 from supabase_integration import supabase_admin
 
 router = APIRouter(prefix="/api/folders", tags=["folders"])

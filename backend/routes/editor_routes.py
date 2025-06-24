@@ -8,8 +8,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from auth.dependencies import get_current_user
-from models.user import User
+from ..auth.dependencies import get_current_user
+from ..models.user import User
 from supabase_integration import supabase_admin as supabase
 
 router = APIRouter(prefix="/api/editor", tags=["editor"])

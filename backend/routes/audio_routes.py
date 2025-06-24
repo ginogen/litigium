@@ -6,8 +6,8 @@ import tempfile
 import os
 from datetime import datetime
 
-from auth.dependencies import get_current_user
-from models.user import User
+from ..auth.dependencies import get_current_user
+from ..models.user import User
 from supabase_integration import supabase
 from rag.audio_service import get_audio_service
 
