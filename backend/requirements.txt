@@ -1,7 +1,8 @@
-# Dependencias para compatibilidad con Python 3.12+
+# Dependencias base
 setuptools>=68.0.0
 wheel>=0.41.0
 
+# FastAPI y servidor
 fastapi==0.104.1
 uvicorn==0.24.0
 python-multipart==0.0.6
@@ -9,25 +10,28 @@ python-dotenv==1.0.0
 pydantic==2.5.0
 aiofiles==23.2.1
 mangum==0.17.0
-requests==2.31.0
 
-# Supabase y dependencias compatibles
+# HTTP y requests
+requests==2.31.0
+httpx>=0.26.0,<0.28.0
+
+# Supabase (versiones compatibles)
 supabase==2.9.1
-httpx==0.25.2
 gotrue>=2.9.0
 postgrest==0.13.2
 
+# OpenAI
 openai==1.51.0
 
-# Procesamiento de documentos (agregar si necesario)
+# Procesamiento de documentos (comentado por ahora)
 # PyPDF2==3.0.1
 # python-docx==1.1.0
 # Pillow==10.1.0
 
-# Base de datos vectorial (agregar si necesario)
+# Base de datos vectorial (comentado por ahora)
 # qdrant-client==1.6.9
 
-# Google Drive (agregar si necesario)
+# Google Drive (comentado por ahora)
 # google-auth==2.25.2
 # google-auth-oauthlib==1.1.0
 # google-api-python-client==2.110.0 

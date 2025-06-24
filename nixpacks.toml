@@ -9,7 +9,8 @@ nixPkgs = ["nodejs", "python311", "python311Packages.pip", "python311Packages.vi
 cmds = [
     "cd frontend && npm ci",
     "python -m venv venv",
-    "source venv/bin/activate && pip install -r backend/requirements.txt"
+    "source venv/bin/activate && pip install --upgrade pip",
+    "source venv/bin/activate && pip install -r backend/requirements-minimal.txt"
 ]
 
 [phases.build]
