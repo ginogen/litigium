@@ -1,0 +1,20 @@
+# Copia este contenido a un archivo llamado .env en la carpeta backend
+
+# Configuración de Supabase
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_aqui
+
+# Configuración de OpenAI
+OPENAI_API_KEY=tu_openai_api_key_aqui
+
+# Configuración de Qdrant
+QDRANT_HOST=localhost
+QDRANT_PORT=6333
+QDRANT_API_KEY=
+
+# Configuración de la aplicación
+ENVIRONMENT=development
+DEBUG=True
+
+# Base de datos (si usas PostgreSQL directamente)
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname 

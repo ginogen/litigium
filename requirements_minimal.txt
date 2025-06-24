@@ -1,0 +1,15 @@
+# Dependencias mínimas esenciales
+streamlit
+qdrant-client
+openai
+python-dotenv
+requests
+
+# Procesamiento básico de documentos
+python-docx
+docx2txt
+PyPDF2
+
+# Utilidades básicas
+pandas
+tqdm 

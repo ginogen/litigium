@@ -1,0 +1,32 @@
+# =====================================
+# CONFIGURACIÓN DE ENTORNO
+# Sistema Legal AI - Generador de Demandas
+# =====================================
+
+# === EXISTENTES (OpenAI y Qdrant) ===
+OPENAI_API_KEY=sk-your-openai-api-key
+QDRANT_URL=https://your-qdrant-instance.qdrant.io
+QDRANT_API_KEY=your-qdrant-api-key
+QDRANT_COLLECTION_PREFIX=legalbot_
+
+# === NUEVAS (Supabase) ===
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_KEY=your-service-role-key-here
+
+# === CONFIGURACIÓN DE LA APP ===
+SECRET_KEY=your-super-secret-key-for-sessions
+DEBUG=True
+ENVIRONMENT=development
+
+# === CONFIGURACIÓN DE ARCHIVOS ===
+MAX_FILE_SIZE=10485760  # 10MB en bytes
+ALLOWED_FILE_TYPES=pdf,docx,doc
+
+# === CONFIGURACIÓN DE QDRANT ===
+QDRANT_VECTOR_SIZE=1536  # Para OpenAI embeddings
+QDRANT_DISTANCE_METRIC=Cosine
+
+# === CONFIGURACIÓN DE LOGGING ===
+LOG_LEVEL=INFO
+LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s 

@@ -1,0 +1,20 @@
+/* Override only problematic external styles, not internal ones */
+
+/* Force dark gray background on root elements */
+html, body, #root {
+  background-color: rgb(52, 53, 65) !important;
+  background: rgb(52, 53, 65) !important;
+}
+
+/* Ensure dark theme is consistent */
+.dark .bg-background {
+  background-color: rgb(52, 53, 65) !important;
+}
+
+.dark .bg-card {
+  background-color: rgb(68, 70, 84) !important;
+}
+
+.dark .bg-popover {
+  background-color: rgb(32, 33, 35) !important;
+} 

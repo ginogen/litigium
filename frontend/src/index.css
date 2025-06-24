@@ -1,0 +1,326 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ChatGPT Exact Colors */
+    --background: 52 53 65; /* #343541 - ChatGPT main background */
+    --foreground: 236 236 241; /* #ececf1 - ChatGPT text */
+    --card: 68 70 84; /* #444654 - ChatGPT card/secondary bg */
+    --card-foreground: 236 236 241; /* #ececf1 */
+    --popover: 32 33 35; /* #202123 - ChatGPT darker areas */
+    --popover-foreground: 236 236 241; /* #ececf1 */
+    --primary: 16 163 127; /* #10a37f - ChatGPT green */
+    --primary-foreground: 255 255 255; /* #ffffff */
+    --secondary: 86 88 105; /* #565869 - ChatGPT secondary */
+    --secondary-foreground: 236 236 241; /* #ececf1 */
+    --muted: 142 142 160; /* #8e8ea0 - ChatGPT muted */
+    --muted-foreground: 217 217 227; /* #d9d9e3 */
+    --accent: 16 163 127; /* #10a37f */
+    --accent-foreground: 255 255 255; /* #ffffff */
+    --destructive: 239 68 68; /* #ef4444 */
+    --destructive-foreground: 255 255 255; /* #ffffff */
+    --border: 77 77 77; /* #4d4d4d - ChatGPT borders */
+    --input: 64 65 79; /* #40414f - ChatGPT input bg */
+    --ring: 16 163 127; /* #10a37f */
+    --radius: 0.5rem;
+    
+    /* ChatGPT specific */
+    --sidebar-bg: 66 66 66; /* #202123 - Sidebar background */
+    --message-bg: 68 70 84; /* #444654 - AI message background */
+    
+    /* Accent colors for highlights only */
+    --accent-purple: 139 92 246; /* #8b5cf6 - Purple accent */
+    --accent-purple: 139 92 246; /* #8b5cf6 - Purple accent */
+  }
+
+  .dark {
+    /* Same as root for dark theme */
+    --background: 52 53 65;
+    --foreground: 236 236 241;
+    --card: 68 70 84;
+    --card-foreground: 236 236 241;
+    --popover: 32 33 35;
+    --popover-foreground: 236 236 241;
+    --primary: 16 163 127;
+    --primary-foreground: 255 255 255;
+    --secondary: 86 88 105;
+    --secondary-foreground: 236 236 241;
+    --muted: 142 142 160;
+    --muted-foreground: 217 217 227;
+    --accent: 16 163 127;
+    --accent-foreground: 255 255 255;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 77 77 77;
+    --input: 64 65 79;
+    --ring: 16 163 127;
+    --sidebar-bg: 66 66 66;
+    --message-bg: 68 70 84;
+    --accent-purple: 139 92 246;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Söhne', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: rgb(52, 53, 65) !important; /* Force background color */
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  #root {
+    height: 100vh;
+    overflow: hidden;
+    background-color: rgb(52, 53, 65) !important; /* Force background color */
+  }
+}
+
+/* ChatGPT Scrollbars */
+@layer utilities {
+  /* Hide scrollbars but keep functionality */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Thin scrollbars for visible areas */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Focus styles */
+  *:focus {
+    outline: none;
+  }
+
+  *:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(139, 92, 246, 0.3); /* Purple selection */
+    color: inherit;
+  }
+
+  /* ChatGPT specific styles */
+  .chatgpt-gradient {
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
+  }
+
+  /* Message styles */
+  .message-user {
+    background-color: transparent;
+  }
+
+  .message-assistant {
+    background-color: hsl(var(--message-bg));
+    border-color: hsl(var(--border));
+  }
+
+  /* Input styles */
+  .chatgpt-input {
+    background-color: hsl(var(--input));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .chatgpt-input:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 1px hsl(var(--primary));
+  }
+
+  /* Button styles */
+  .chatgpt-button {
+    @apply px-3 py-2 rounded-md text-sm font-medium transition-all;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .chatgpt-button-secondary {
+    @apply px-3 py-2 rounded-md text-sm font-medium transition-all;
+    @apply bg-transparent border border-border text-foreground hover:bg-secondary/50;
+  }
+
+  /* Sidebar styles */
+  .sidebar-item {
+    @apply px-3 py-3 rounded-md text-sm transition-all cursor-pointer;
+    @apply hover:bg-secondary/50 text-foreground;
+  }
+
+  .sidebar-item.active {
+    @apply bg-secondary/50;
+  }
+
+  /* Typography */
+  .text-token-text-primary {
+    color: hsl(var(--foreground));
+  }
+
+  .text-token-text-secondary {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .text-token-text-tertiary {
+    color: hsl(var(--muted));
+  }
+  
+  /* Purple accent for special elements */
+  .accent-purple {
+    color: hsl(var(--accent-purple));
+  }
+  
+  .accent-purple-border {
+    border-color: hsl(var(--accent-purple));
+  }
+  
+  .accent-purple-bg {
+    background-color: hsl(var(--accent-purple) / 0.1);
+  }
+  
+  /* Ensure consistent colors - force correct primary colors */
+  .bg-primary {
+    background-color: hsl(16 163 127) !important; /* ChatGPT green */
+  }
+  
+  .text-primary {
+    color: hsl(16 163 127) !important; /* ChatGPT green */
+  }
+  
+  .border-primary {
+    border-color: hsl(16 163 127) !important; /* ChatGPT green */
+  }
+  
+  .bg-primary\/5 {
+    background-color: hsla(16, 163, 127, 0.05) !important;
+  }
+  
+  .bg-primary\/10 {
+    background-color: hsla(16, 163, 127, 0.1) !important;
+  }
+  
+  .bg-primary\/90 {
+    background-color: hsla(16, 163, 127, 0.9) !important;
+  }
+  
+  .hover\:bg-primary\/90:hover {
+    background-color: hsla(16, 163, 127, 0.9) !important;
+  }
+  
+  .focus\:ring-primary:focus {
+    box-shadow: 0 0 0 3px hsla(16, 163, 127, 0.3) !important;
+  }
+  
+  /* Force correct colors in Profile and Training sections */
+  [data-section="profile"] .bg-primary,
+  [data-section="training"] .bg-primary,
+  .profile-section .bg-primary,
+  .training-section .bg-primary {
+    background-color: hsl(16 163 127) !important;
+  }
+  
+  [data-section="profile"] .text-primary,
+  [data-section="training"] .text-primary,
+  .profile-section .text-primary,
+  .training-section .text-primary {
+    color: hsl(16 163 127) !important;
+  }
+  
+  [data-section="profile"] .border-primary,
+  [data-section="training"] .border-primary,
+  .profile-section .border-primary,
+  .training-section .border-primary {
+    border-color: hsl(16 163 127) !important;
+  }
+  
+  /* Force chat area background */
+  .bg-background {
+    background-color: rgb(52, 53, 65) !important;
+  }
+  
+
+  
+  /* Clean ChatGPT color enforcement - No gold/yellow colors allowed */
+  
+  /* Force correct card backgrounds with proper opacity */
+  .bg-card\/50,
+  .bg-card\/\35 0,
+  *[class*="bg-card/50"],
+  *[class*="bg-card\/50"] {
+    background-color: rgba(68, 70, 84, 0.5) !important; /* ChatGPT card with 50% opacity */
+  }
+  
+  .bg-card\/30,
+  *[class*="bg-card/30"],
+  *[class*="bg-card\/30"] {
+    background-color: rgba(68, 70, 84, 0.3) !important; /* ChatGPT card with 30% opacity */
+  }
+  
+  .bg-card\/80,
+  *[class*="bg-card/80"],
+  *[class*="bg-card\/80"] {
+    background-color: rgba(68, 70, 84, 0.8) !important; /* ChatGPT card with 80% opacity */
+  }
+  
+  /* Force correct borders */
+  .border-border,
+  *[class*="border-border"] {
+    border-color: rgb(77, 77, 77) !important; /* ChatGPT border color */
+  }
+  
+     /* Override any problematic colors and replace with ChatGPT colors */
+   *[class*="yellow"],
+   *[class*="amber"],
+   *[class*="gold"],
+   *[class*="orange-4"],
+   *[class*="orange-5"],
+   .text-yellow-400,
+   .text-amber-400,
+   .bg-yellow-400,
+   .bg-amber-400,
+   .border-yellow-400,
+   .border-amber-400 {
+     color: rgb(236, 236, 241) !important; /* ChatGPT foreground */
+     background-color: rgb(68, 70, 84) !important; /* ChatGPT card */
+     border-color: rgb(77, 77, 77) !important; /* ChatGPT border */
+   }
+   
+   /* Ensure consistent color scheme across all sections */
+   .profile-section,
+   .training-section,
+   [data-section="profile"],
+   [data-section="training"] {
+     --primary: 16 163 127 !important; /* ChatGPT green */
+     --primary-foreground: 255 255 255 !important;
+   }
+}

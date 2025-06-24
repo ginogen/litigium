@@ -1,0 +1,51 @@
+# =====================================
+# DEPENDENCIAS PARA SUPABASE INTEGRATION
+# =====================================
+
+# Supabase client oficial
+supabase==2.3.4
+
+# Dependencias de Supabase
+postgrest==0.13.2
+gotrue==2.4.2
+storage3==0.7.4
+supafunc==0.5.1
+
+# HTTP client mejorado
+httpx==0.26.0
+
+# JWT handling
+pyjwt==2.8.0
+cryptography==41.0.8
+
+# Para validación de esquemas
+pydantic==2.5.3
+
+# Para manejo de fechas
+python-dateutil==2.8.2
+
+# Para uploads de archivos
+python-multipart==0.0.6
+
+# Para generación de UUIDs
+uuid==1.30
+
+# Para hashing de passwords (si es necesario)
+bcrypt==4.1.2
+
+# Para async file operations
+aiofiles==23.2.1
+
+# =====================================
+# DEPENDENCIAS ADICIONALES EXISTENTES
+# =====================================
+
+# Las que ya tienes en tu proyecto actual:
+# fastapi
+# uvicorn
+# langchain
+# openai
+# qdrant-client
+# python-docx
+# jinja2
+# python-dotenv 
