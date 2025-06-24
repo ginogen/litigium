@@ -12,6 +12,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@/lib": ["./src/lib/index.ts"],
       "@/lib/*": ["./src/lib/*"],
       "@/contexts/*": ["./src/contexts/*"],
       "@/components/*": ["./src/components/*"],
