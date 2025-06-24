@@ -1,13 +1,13 @@
 {
-  "name": "legal-assistant-ai",
-  "version": "1.0.0",
+  "name": "litigium-app",
   "private": true,
+  "version": "1.0.0",
   "scripts": {
-    "build": "npm --prefix frontend ci && npm --prefix frontend run build",
-    "dev": "npm --prefix frontend run dev",
-    "start": "npm --prefix frontend run preview"
+    "build": "cd frontend && npm ci && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "start": "cd frontend && npm run dev"
   },
-  "workspaces": [
-    "frontend"
-  ]
+  "dependencies": {
+    "mangum": "^0.17.0"
+  }
 } 
