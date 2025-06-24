@@ -1,5 +1,19 @@
+# Dependencias básicas para FastAPI
 fastapi==0.104.1
-mangum==0.17.0
+uvicorn==0.24.0
 python-multipart==0.0.6
 pydantic==2.5.0
-python-dotenv==1.0.0 
+python-dotenv==1.0.0
+aiofiles==23.2.1
+requests==2.31.0
+
+# Adaptador para funciones serverless
+mangum==0.17.0
+
+# Supabase y OpenAI
+supabase==2.0.2
+openai==1.51.0
+
+# Dependencias para compatibilidad
+setuptools>=68.0.0
+wheel>=0.41.0 
