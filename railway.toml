@@ -1,15 +1,12 @@
 [build]
 builder = "nixpacks"
 
+[deploy]
+startCommand = "python main.py"
+
 [build.environment]
 PYTHONPATH = "."
 NIXPACKS_PYTHON_VERSION = "3.11.6"
-NODE_VERSION = "20"
 
 [variables]
-RAILWAY_RUNTIME = "python"
-
-# Comandos de construcción
-[build.commands]
-installCommand = "pip install -r backend/requirements.txt && cd frontend && npm install"
-buildCommand = "cd frontend && npm run build" 
+RAILWAY_RUNTIME = "python" 
