@@ -14,7 +14,7 @@ requests==2.31.0
 # Supabase y dependencias compatibles
 supabase==2.9.1
 httpx==0.25.2
-gotrue==2.8.1
+gotrue>=2.9.0
 postgrest==0.13.2
 
 openai==1.51.0
