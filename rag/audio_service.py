@@ -8,8 +8,15 @@ import aiofiles
 from typing import Optional
 import logging
 from openai import OpenAI
-from pydub import AudioSegment
 import io
+
+# Importación condicional de pydub para compatibilidad con Railway
+try:
+    from pydub import AudioSegment
+    PYDUB_AVAILABLE = True
+except ImportError:
+    PYDUB_AVAILABLE = False
+    AudioSegment = None
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +36,14 @@ class AudioService:
             Texto transcrito o None si hay error
         """
         try:
-            # Primero intentar convertir el audio a un formato óptimo
-            audio_optimizado = await self.convertir_audio_format(audio_data, formato, "mp3")
-            if audio_optimizado:
-                audio_data = audio_optimizado
-                formato = "mp3"
+            # Intentar convertir el audio a un formato óptimo solo si pydub está disponible
+            if PYDUB_AVAILABLE:
+                audio_optimizado = await self.convertir_audio_format(audio_data, formato, "mp3")
+                if audio_optimizado:
+                    audio_data = audio_optimizado
+                    formato = "mp3"
+            else:
+                logger.info("pydub no disponible, usando audio original sin conversión")
             
             # Crear archivo temporal
             with tempfile.NamedTemporaryFile(suffix=f".{formato}", delete=False) as temp_file:
@@ -65,7 +75,7 @@ class AudioService:
     
     async def convertir_audio_format(self, audio_data: bytes, formato_origen: str, formato_destino: str = "wav") -> Optional[bytes]:
         """
-        Convierte audio de un formato a otro usando pydub
+        Convierte audio de un formato a otro usando pydub (si está disponible)
         
         Args:
             audio_data: Datos binarios del audio original
@@ -73,8 +83,12 @@ class AudioService:
             formato_destino: Formato deseado
             
         Returns:
-            Datos binarios del audio convertido o None si hay error
+            Datos binarios del audio convertido o None si hay error o pydub no está disponible
         """
+        if not PYDUB_AVAILABLE:
+            logger.warning("pydub no está disponible, retornando audio sin convertir")
+            return None
+            
         try:
             # Cargar audio desde bytes
             audio_io = io.BytesIO(audio_data)
@@ -112,7 +126,12 @@ class AudioService:
                 logger.warning(f"Audio demasiado grande: {size_mb:.2f}MB")
                 return False
             
-            # Verificar que sea un audio válido
+            # Si pydub no está disponible, solo validar tamaño básico
+            if not PYDUB_AVAILABLE:
+                logger.info("pydub no disponible, validación básica de tamaño solamente")
+                return True
+            
+            # Verificar que sea un audio válido usando pydub
             audio_io = io.BytesIO(audio_data)
             audio = AudioSegment.from_file(audio_io)
             

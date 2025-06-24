@@ -11,10 +11,19 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaIoBaseDownload
-from google.oauth2.credentials import Credentials
+# Importaciones condicionales de Google Drive API para compatibilidad con Railway
+try:
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    from googleapiclient.http import MediaIoBaseDownload
+    from google.oauth2.credentials import Credentials
+    GOOGLE_DRIVE_AVAILABLE = True
+except ImportError:
+    GOOGLE_DRIVE_AVAILABLE = False
+    build = None
+    HttpError = Exception
+    MediaIoBaseDownload = None
+    Credentials = None
 
 from .token_manager import token_manager
 try:
@@ -46,9 +55,16 @@ class GoogleDriveService:
     def __init__(self):
         self.drive_service = None
         self.current_credentials = None
+        self.available = GOOGLE_DRIVE_AVAILABLE
+        
+        if not GOOGLE_DRIVE_AVAILABLE:
+            print("⚠️ Google Drive API no disponible - funcionalidad limitada")
     
-    def _get_service(self, credentials: Credentials):
+    def _get_service(self, credentials):
         """Get or create Google Drive service with credentials"""
+        if not GOOGLE_DRIVE_AVAILABLE:
+            raise Exception("Google Drive API no está disponible. Instale google-api-python-client y dependencias relacionadas.")
+            
         if self.drive_service is None or self.current_credentials != credentials:
             self.drive_service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
             self.current_credentials = credentials
@@ -388,6 +404,9 @@ class GoogleDriveService:
             Dictionary with file metadata
         """
         try:
+            if not GOOGLE_DRIVE_AVAILABLE:
+                raise Exception("Google Drive API no está disponible")
+                
             from googleapiclient.http import MediaIoBaseUpload
             
             service = self._get_service(credentials)
@@ -597,5 +616,18 @@ class GoogleDriveService:
             raise Exception(f"Error getting folder contents: {e}")
 
 
-# Global instance
-google_drive_service = GoogleDriveService() 
+# Global instance (condicional para compatibilidad con Railway)
+if GOOGLE_DRIVE_AVAILABLE:
+    google_drive_service = GoogleDriveService()
+else:
+    # Crear un servicio mock que arroja errores informativos
+    class MockGoogleDriveService:
+        def __init__(self):
+            self.available = False
+            
+        def __getattr__(self, name):
+            def method_not_available(*args, **kwargs):
+                raise Exception("Google Drive API no está disponible. Instale google-api-python-client y dependencias relacionadas.")
+            return method_not_available
+    
+    google_drive_service = MockGoogleDriveService() 

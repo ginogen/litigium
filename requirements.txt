@@ -1,49 +1,40 @@
-# Dependencias para compatibilidad con Python 3.12+
-setuptools>=68.0.0
-wheel>=0.41.0
-
-# Dependencias principales
+# Dependencias esenciales para Railway
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
-pydantic==2.5.0
+pydantic>=2.5.0,<3.0.0
 python-dotenv==1.0.0
 
-# Supabase y dependencias compatibles
-supabase==2.9.1
-httpx==0.25.2
-gotrue==2.8.1
-postgrest==0.13.2
+# Supabase (versiones flexibles para mejor compatibilidad)
+supabase>=2.0.0,<3.0.0
+httpx>=0.25.0,<1.0.0
 
+# IA y embeddings
 openai>=1.6.1
 qdrant-client>=1.7.0
 langchain-openai>=0.0.5
-sentence-transformers>=2.3.0
+
+# Procesamiento básico de documentos
+python-docx>=1.0.0
+PyPDF2>=3.0.0
 requests>=2.31.0
-numpy>=1.26.0
-pandas>=2.1.0
 
-# Procesamiento de documentos
-python-docx==1.1.0
-PyPDF2==3.0.1
-pdfplumber==0.9.0
-openpyxl==3.1.2
-python-pptx==0.6.21
+# Utilidades básicas
+tqdm>=4.0.0
+aiofiles>=23.0.0
 
-# Soporte mejorado para archivos .doc antiguos
-docx2txt==0.8
-# python-magic-bin==0.4.14  # Comentado por problemas de instalación
-chardet==5.2.0
+# Audio básico (sin dependencias pesadas)
+# pydub==0.25.1  # Comentado temporalmente para Railway
+# SpeechRecognition==3.10.0  # Comentado temporalmente para Railway
 
-# Audio processing
-pydub==0.25.1
-SpeechRecognition==3.10.0
+# Google Drive (comentado temporalmente para Railway)
+# google-api-python-client>=2.100.0
+# google-auth>=2.20.0
+# google-auth-oauthlib>=1.0.0
 
-# Utilidades
-tqdm==4.66.1
-pathlib2==2.3.7
-streamlit==1.29.0
-
-# Dependencias opcionales (descomentadas según necesidad)
-# pypandoc==1.11  # Requiere pandoc instalado en el sistema
-# antiword==1.4.0  # Para archivos .doc en Linux/Mac
+# Procesamiento avanzado (comentado para reducir problemas)
+# sentence-transformers>=2.3.0  # Muy pesado para Railway
+# numpy>=1.26.0  # Se instalará automáticamente si es necesario
+# pandas>=2.1.0  # Comentado por ser pesado
+# streamlit==1.29.0  # No necesario para backend
+# pathlib2==2.3.7  # No necesario en Python 3.12+
