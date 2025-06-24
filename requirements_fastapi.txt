@@ -1,3 +1,7 @@
+# Dependencias para compatibilidad con Python 3.12+
+setuptools>=68.0.0
+wheel>=0.41.0
+
 # Backend FastAPI
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
@@ -21,7 +25,7 @@ numpy==1.24.3
 pandas==2.0.3
 
 # Procesamiento de documentos
-python-docx==0.8.11
+python-docx==1.1.0
 docx2txt==0.8
 PyPDF2==3.0.1
 pdfplumber==0.9.0

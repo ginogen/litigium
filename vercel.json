@@ -1,4 +1,12 @@
 {
   "buildCommand": "npm --prefix frontend ci && npm --prefix frontend run build",
-  "outputDirectory": "frontend/dist"
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "backend/main.py": {
+      "runtime": "python3.11"
+    }
+  },
+  "env": {
+    "SETUPTOOLS_USE_DISTUTILS": "stdlib"
+  }
 } 

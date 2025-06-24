@@ -1,9 +1,15 @@
-# Dependencias mínimas esenciales
-streamlit
-qdrant-client
-openai
-python-dotenv
-requests
+# Dependencias mínimas para compatibilidad Python 3.12+
+setuptools>=68.0.0
+wheel>=0.41.0
+
+# Dependencias mínimas para el proyecto
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pydantic==2.5.0
+python-dotenv==1.0.0
+requests==2.31.0
+aiofiles==23.2.1
 
 # Procesamiento básico de documentos
 python-docx
