@@ -47,6 +47,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Permitir frontend/src/lib/ pero ignorar otras carpetas lib de Python
+!frontend/src/lib/
+
 # IDE
 .vscode/
 .idea/
