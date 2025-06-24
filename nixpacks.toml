@@ -1,0 +1,12 @@
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.12"
+PYTHONPATH = "."
+
+[phases.build]
+cmds = [
+    "pip install --upgrade pip",
+    "pip install -r requirements.txt"
+]
+
+[phases.start]
+cmd = "python3 -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT" 
