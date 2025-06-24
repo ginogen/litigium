@@ -6,13 +6,28 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      '@/lib': resolve(__dirname, 'src/lib/index.ts'),
-      '@/contexts': resolve(__dirname, 'src/contexts'),
-      '@/components': resolve(__dirname, 'src/components'),
-      '@/types': resolve(__dirname, 'src/types'),
-    },
+    alias: [
+      {
+        find: '@/lib',
+        replacement: resolve(__dirname, 'src/lib')
+      },
+      {
+        find: '@',
+        replacement: resolve(__dirname, 'src')
+      },
+      {
+        find: '@/contexts',
+        replacement: resolve(__dirname, 'src/contexts')
+      },
+      {
+        find: '@/components',
+        replacement: resolve(__dirname, 'src/components')
+      },
+      {
+        find: '@/types',
+        replacement: resolve(__dirname, 'src/types')
+      }
+    ],
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   server: {
