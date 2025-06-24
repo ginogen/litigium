@@ -8,14 +8,25 @@ import json
 import base64
 from typing import Dict, Optional, Tuple
 from datetime import datetime, timedelta, timezone
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-import google.auth.transport.requests
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
+# Importaciones condicionales para compatibilidad con Railway
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    CRYPTOGRAPHY_AVAILABLE = True
+except ImportError:
+    CRYPTOGRAPHY_AVAILABLE = False
+    Fernet = None
+
+try:
+    import google.auth.transport.requests
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import Flow
+    from googleapiclient.discovery import build
+    GOOGLE_AUTH_AVAILABLE = True
+except ImportError:
+    GOOGLE_AUTH_AVAILABLE = False
 
 try:
     from ..config import settings
@@ -27,11 +38,22 @@ class TokenManager:
     """Manages encryption/decryption and refresh of Google OAuth2 tokens"""
     
     def __init__(self):
+        self.available = CRYPTOGRAPHY_AVAILABLE and GOOGLE_AUTH_AVAILABLE
+        
+        if not self.available:
+            print("⚠️ TokenManager no disponible - faltan dependencias crypto/google-auth")
+            self.encryption_key = None
+            self.fernet = None
+            return
+            
         self.encryption_key = self._get_or_create_encryption_key()
         self.fernet = Fernet(self.encryption_key)
     
     def _get_or_create_encryption_key(self) -> bytes:
         """Get encryption key from environment or derive from a password"""
+        if not CRYPTOGRAPHY_AVAILABLE:
+            raise Exception("Cryptography no disponible para generar claves de encriptación")
+            
         if settings.TOKEN_ENCRYPTION_KEY:
             # If we have a key, use it directly
             try:
@@ -56,6 +78,9 @@ class TokenManager:
     
     def encrypt_token(self, token: str) -> str:
         """Encrypt a token string"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - faltan dependencias crypto/google-auth")
+            
         try:
             if not token:
                 return ""
@@ -163,6 +188,9 @@ class TokenManager:
     
     def get_authorization_url(self, user_id: str) -> str:
         """Generate authorization URL for OAuth2 flow"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - Google Drive requiere dependencias adicionales")
+            
         flow = self.get_oauth_flow()
         
         # Include user_id in state for security
@@ -205,5 +233,18 @@ class TokenManager:
             raise Exception(f"Failed to exchange authorization code: {e}")
 
 
-# Global instance
-token_manager = TokenManager() 
+# Global instance (condicional para compatibilidad con Railway)
+if CRYPTOGRAPHY_AVAILABLE and GOOGLE_AUTH_AVAILABLE:
+    token_manager = TokenManager()
+else:
+    # Crear un manager mock que arroja errores informativos
+    class MockTokenManager:
+        def __init__(self):
+            self.available = False
+            
+        def __getattr__(self, name):
+            def method_not_available(*args, **kwargs):
+                raise Exception("Google Drive no disponible - instale cryptography y google-auth-oauthlib")
+            return method_not_available
+    
+    token_manager = MockTokenManager() 

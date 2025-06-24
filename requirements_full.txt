@@ -1,0 +1,46 @@
+# Requirements completos con todas las funcionalidades
+# Usar después del deploy básico exitoso
+
+# Dependencias básicas
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pydantic>=2.5.0,<3.0.0
+python-dotenv==1.0.0
+aiofiles>=23.0.0
+
+# Supabase
+supabase>=2.0.0,<3.0.0
+httpx>=0.25.0,<1.0.0
+
+# IA y procesamiento inteligente
+openai>=1.6.1
+qdrant-client>=1.7.0
+langchain-openai>=0.0.5
+
+# Procesamiento de documentos completo
+python-docx>=1.0.0
+PyPDF2>=3.0.0
+pdfplumber>=0.9.0
+openpyxl>=3.1.0
+python-pptx>=0.6.0
+docx2txt>=0.8
+chardet>=5.0.0
+
+# Audio processing completo
+pydub>=0.25.1
+SpeechRecognition>=3.10.0
+
+# Google Drive completo
+google-api-python-client>=2.100.0
+google-auth>=2.20.0
+google-auth-oauthlib>=1.0.0
+
+# IA avanzada (opcional)
+sentence-transformers>=2.3.0
+numpy>=1.26.0
+pandas>=2.1.0
+
+# Utilidades
+tqdm>=4.0.0
+requests>=2.31.0 

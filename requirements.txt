@@ -9,10 +9,15 @@ python-dotenv==1.0.0
 supabase>=2.0.0,<3.0.0
 httpx>=0.25.0,<1.0.0
 
-# IA y embeddings
+# IA y embeddings (CRÍTICAS para el funcionamiento)
 openai>=1.6.1
 qdrant-client>=1.7.0
+langchain>=0.1.0
+langchain-core>=0.1.0
 langchain-openai>=0.0.5
+
+# Dependencias críticas para servicios
+cryptography>=3.0.0
 
 # Procesamiento básico de documentos
 python-docx>=1.0.0
