@@ -45,4 +45,10 @@ data/casos_anteriores/
 
 # Scripts de test
 test_*.py
-debug_*.py 
+debug_*.py
+
+# Archivos específicos de Railway
+railway.toml
+Procfile
+DEPLOY_RAILWAY.md
+railway.env.example 

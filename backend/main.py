@@ -5,7 +5,8 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from dotenv import load_dotenv
 from mangum import Mangum
@@ -29,14 +30,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configurar CORS para producción
+# Configurar CORS para Railway
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:5173",
         "https://*.vercel.app",
-        os.getenv("FRONTEND_URL", "")
+        "https://*.railway.app",
+        "https://*.up.railway.app",
+        os.getenv("FRONTEND_URL", ""),
+        os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -52,6 +56,29 @@ app.include_router(audio_router)       # Procesamiento de audio
 app.include_router(training_router)    # Entrenamiento personalizado
 app.include_router(folder_router)      # Gestión de carpetas
 app.include_router(google_drive_router)  # Integración Google Drive
+
+# Configuración para servir el frontend estático (Railway)
+frontend_dist_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+
+# Solo montar archivos estáticos si el directorio existe (en producción)
+if os.path.exists(frontend_dist_path):
+    # Servir archivos estáticos del frontend
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist_path, "assets")), name="assets")
+    
+    # Ruta catch-all para servir el frontend SPA
+    @app.get("/{path:path}")
+    async def serve_frontend(path: str):
+        # Si es una ruta de API, no interceptar
+        if path.startswith("api/") or path.startswith("health"):
+            return JSONResponse({"error": "API route not found"}, status_code=404)
+        
+        # Intentar servir archivo específico primero
+        file_path = os.path.join(frontend_dist_path, path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Si no existe, servir index.html (SPA routing)
+        return FileResponse(os.path.join(frontend_dist_path, "index.html"))
 
 # Ruta de salud
 @app.get("/health")
