@@ -3,18 +3,20 @@ NODE_VERSION = "20"
 PYTHON_VERSION = "3.11.6"
 
 [phases.setup]
-nixPkgs = ["nodejs", "python311", "python311Packages.pip"]
+nixPkgs = ["nodejs", "python311", "python311Packages.pip", "python311Packages.virtualenv"]
 
 [phases.install]
 cmds = [
     "cd frontend && npm ci",
-    "pip install -r backend/requirements.txt"
+    "python -m venv venv",
+    "source venv/bin/activate && pip install -r backend/requirements.txt"
 ]
 
 [phases.build]
 cmds = [
-    "cd frontend && npm run build"
+    "cd frontend && npm run build",
+    "chmod +x start.sh"
 ]
 
 [start]
-cmd = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT" 
+cmd = "./start.sh" 
