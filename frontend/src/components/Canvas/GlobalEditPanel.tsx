@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { useCanvas } from '@/contexts/CanvasContext';
-import { useChat } from '@/contexts/ChatContext';
+import { useCanvas } from '../../contexts/CanvasContext';
+import { useChat } from '../../contexts/ChatContext';
 import { Globe, Sparkles, ArrowRight, X, Check } from 'lucide-react';
 
 interface GlobalEditPanelProps {

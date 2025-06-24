@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { audioAPI } from '@/lib/audio-api';
+import { audioAPI } from '../lib/audio-api';
 
 export interface AudioRecordingState {
   isRecording: boolean;

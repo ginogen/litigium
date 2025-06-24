@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { googleDriveAPI } from '@/lib/google-drive-api';
+import { googleDriveAPI } from '../../lib/google-drive-api';
 
 export function GoogleCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');

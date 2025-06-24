@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { 
   MessageSquare, 
   Edit, 
@@ -17,7 +17,7 @@ import {
   MessageCircle,
   Loader2
 } from 'lucide-react';
-import { AnnotationSkeleton } from '@/components/ui/Skeleton';
+import { AnnotationSkeleton } from '../ui/Skeleton';
 
 interface Annotation {
   id: string;

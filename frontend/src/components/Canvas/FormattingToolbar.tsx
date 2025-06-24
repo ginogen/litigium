@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useTextSelection } from '@/contexts/TextSelectionContext';
-import { cn } from '@/lib/utils';
+import { useTextSelection } from '../../contexts/TextSelectionContext';
+import { cn } from '../../lib/utils';
 
 export function FormattingToolbar() {
   const { state } = useTextSelection();

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useChat } from '@/contexts/ChatContext';
+import { useChat } from '../../contexts/ChatContext';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
 import { TypingIndicator } from './TypingIndicator';
-import { ChatLoadingSkeleton } from '@/components/ui/Skeleton';
+import { ChatLoadingSkeleton } from '../ui/Skeleton';
 
 export function ChatContainer() {
   const { state } = useChat();

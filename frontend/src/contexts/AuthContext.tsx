@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { createClient, User, Session } from '@supabase/supabase-js';
-import { SupabaseError } from '@/components/Auth/SupabaseError';
+import { SupabaseError } from '../components/Auth/SupabaseError';
 
 // Configuración de Supabase
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

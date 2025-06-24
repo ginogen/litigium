@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useChat } from '@/contexts/ChatContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useChatStorage, ChatFolder, ChatSession } from '@/contexts/ChatStorageContext';
-import { cn } from '@/lib/utils';
+import { useChat } from '../../contexts/ChatContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useChatStorage, ChatFolder, ChatSession } from '../../contexts/ChatStorageContext';
+import { cn } from '../../lib/utils';
 import { ChevronDown, ChevronRight, Plus, FolderOpen, Folder, MessageSquare, Upload, User, Menu, X, FileText, Calendar, LogOut, Pencil, Trash2, FolderPlus, MoreVertical, Move, Check, Square, CheckSquare } from 'lucide-react';
-import { SidebarSkeleton } from '@/components/ui/Skeleton';
-import type { AppSection } from '@/App';
+import { SidebarSkeleton } from '../ui/Skeleton';
+import type { AppSection } from '../../App';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -254,7 +254,7 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
       console.log('🆕 Verificando requisitos para nueva consulta...');
       
       // Importar API de verificación
-      const { chatAPI } = await import('@/lib/api');
+      const { chatAPI } = await import('../../lib/api');
       
       // Verificar si hay categorías disponibles
       const verificacion = await chatAPI.verificarCategorias();

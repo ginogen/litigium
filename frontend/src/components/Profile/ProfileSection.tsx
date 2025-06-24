@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { useAuth } from '../../contexts/AuthContext';
+import { cn } from '../../lib/utils';
 import { User, Mail, Phone, MapPin, GraduationCap, Calendar, Save, Edit, Eye, EyeOff } from 'lucide-react';
 
 export function ProfileSection() {

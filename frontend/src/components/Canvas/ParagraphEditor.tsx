@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useCanvas } from '@/contexts/CanvasContext';
-import { useChat } from '@/contexts/ChatContext';
+import { useCanvas } from '../../contexts/CanvasContext';
+import { useChat } from '../../contexts/ChatContext';
 import { ParagraphItem } from './ParagraphItem';
 import { CommandPanel } from './CommandPanel';
 import { EditHistory } from './EditHistory';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function ParagraphEditor() {

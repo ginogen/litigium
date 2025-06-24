@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
-import { Message } from '@/contexts/ChatContext';
-import { useChat } from '@/contexts/ChatContext';
-import { useCanvas } from '@/contexts/CanvasContext';
-import { cn } from '@/lib/utils';
+import { Message } from '../../contexts/ChatContext';
+import { useChat } from '../../contexts/ChatContext';
+import { useCanvas } from '../../contexts/CanvasContext';
+import { cn } from '../../lib/utils';
 
 interface MessageListProps {
   messages: Message[];

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryAPI, Category, annotationAPI, templateAPI, enhancedAnalysisAPI } from '@/lib/api';
-import { googleDriveAPI } from '@/lib/google-drive-api';
-import { Annotation, AnnotationTemplate, Document } from '@/types/annotation';
-import { cn } from '@/lib/utils';
+import { categoryAPI, Category, annotationAPI, templateAPI, enhancedAnalysisAPI } from '../../lib/api';
+import { googleDriveAPI } from '../../lib/google-drive-api';
+import { Annotation, AnnotationTemplate, Document } from '../../types/annotation';
+import { cn } from '../../lib/utils';
 import { Upload, FileText, CheckCircle, XCircle, Clock, Loader2, Search, Settings, Folder, FolderPlus, Filter, BookOpen, MessageSquare, Brain, Cloud, X } from 'lucide-react';
 import { CategoryManager } from './CategoryManager';
 import { DocumentLibrary } from './DocumentLibrary';

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { useChat } from '@/contexts/ChatContext';
-import { useCanvas } from '@/contexts/CanvasContext';
-import { cn } from '@/lib/utils';
+import { useChat } from '../../contexts/ChatContext';
+import { useCanvas } from '../../contexts/CanvasContext';
+import { cn } from '../../lib/utils';
 import { X, Edit3 } from 'lucide-react';
 import { AudioRecorder } from './AudioRecorder';
 

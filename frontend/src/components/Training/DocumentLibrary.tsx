@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { 
   Search, 
   Filter, 
@@ -16,8 +16,8 @@ import {
   Calendar,
   Folder
 } from 'lucide-react';
-import { categoryAPI } from '@/lib/api';
-import { DocumentSkeleton } from '@/components/ui/Skeleton';
+import { categoryAPI } from '../../lib/api';
+import { DocumentSkeleton } from '../ui/Skeleton';
 
 interface Document {
   id: string;

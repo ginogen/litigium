@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { 
   Search, 
   ChevronRight, 
@@ -28,7 +28,7 @@ import {
   formatDate, 
   getFileTypeIcon,
   isFileSupported 
-} from '@/lib/google-drive-api';
+} from '../../lib/google-drive-api';
 
 interface GoogleDriveExplorerProps {
   isConnected: boolean;

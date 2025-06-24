@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { 
   BookTemplate,
   Plus,
@@ -16,7 +16,7 @@ import {
   Tag,
   Loader2
 } from 'lucide-react';
-import { TemplateSkeleton } from '@/components/ui/Skeleton';
+import { TemplateSkeleton } from '../ui/Skeleton';
 
 interface AnnotationTemplate {
   id?: string;
