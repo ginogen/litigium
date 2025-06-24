@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd frontend && npm ci && npm run build",
-    "dev": "cd frontend && npm run dev",
-    "start": "cd frontend && npm run preview"
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build",
+    "dev": "npm --prefix frontend run dev",
+    "start": "npm --prefix frontend run preview"
   },
   "workspaces": [
     "frontend"
