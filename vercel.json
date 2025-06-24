@@ -25,9 +25,5 @@
       "src": "/(.*)",
       "dest": "frontend/dist/$1"
     }
-  ],
-  "outputDirectory": "frontend/dist",
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "devCommand": "cd frontend && npm run dev",
-  "installCommand": "cd frontend && npm ci && cd ../backend && pip install -r requirements.txt"
+  ]
 } 
