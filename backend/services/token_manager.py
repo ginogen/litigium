@@ -6,8 +6,13 @@ Handles encryption, decryption, and token refresh
 import os
 import json
 import base64
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
+
+# Importaciones para type hints (solo durante type checking)
+if TYPE_CHECKING:
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import Flow
 
 # Importaciones condicionales para compatibilidad con Railway
 try:
@@ -27,6 +32,9 @@ try:
     GOOGLE_AUTH_AVAILABLE = True
 except ImportError:
     GOOGLE_AUTH_AVAILABLE = False
+    # Definir clases dummy para evitar errores de nombre
+    Credentials = None
+    Flow = None
 
 try:
     from ..config import settings
@@ -91,6 +99,9 @@ class TokenManager:
     
     def decrypt_token(self, encrypted_token: str) -> str:
         """Decrypt a token string"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - faltan dependencias crypto/google-auth")
+            
         try:
             if not encrypted_token:
                 return ""
@@ -102,6 +113,9 @@ class TokenManager:
     
     def encrypt_token_data(self, token_data: Dict) -> Dict[str, str]:
         """Encrypt token data dictionary"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - faltan dependencias crypto/google-auth")
+            
         return {
             'access_token_encrypted': self.encrypt_token(token_data.get('access_token', '')),
             'refresh_token_encrypted': self.encrypt_token(token_data.get('refresh_token', ''))
@@ -109,13 +123,19 @@ class TokenManager:
     
     def decrypt_token_data(self, encrypted_data: Dict) -> Dict[str, str]:
         """Decrypt token data dictionary"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - faltan dependencias crypto/google-auth")
+            
         return {
             'access_token': self.decrypt_token(encrypted_data.get('access_token_encrypted', '')),
             'refresh_token': self.decrypt_token(encrypted_data.get('refresh_token_encrypted', ''))
         }
     
-    def create_credentials_from_token_data(self, token_data: Dict, expires_at: datetime = None) -> Credentials:
+    def create_credentials_from_token_data(self, token_data: Dict, expires_at: datetime = None) -> "Credentials":
         """Create Google Credentials object from decrypted token data"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - Google Drive requiere dependencias adicionales")
+            
         return Credentials(
             token=token_data['access_token'],
             refresh_token=token_data['refresh_token'],
@@ -126,11 +146,14 @@ class TokenManager:
             expiry=expires_at
         )
     
-    def refresh_credentials(self, credentials: Credentials) -> Tuple[Credentials, bool]:
+    def refresh_credentials(self, credentials: "Credentials") -> Tuple["Credentials", bool]:
         """
         Refresh Google credentials if needed
         Returns: (credentials, was_refreshed)
         """
+        if not self.available:
+            raise Exception("TokenManager no disponible - Google Drive requiere dependencias adicionales")
+            
         try:
             # Check if token needs refresh (expires in next 5 minutes)
             # Nota: Google Auth espera naive datetimes, así que usamos datetime.utcnow()
@@ -154,8 +177,11 @@ class TokenManager:
             print(f"❌ Error refreshing token: {e}")
             raise Exception(f"Failed to refresh Google Drive token: {e}")
     
-    def validate_credentials(self, credentials: Credentials) -> bool:
+    def validate_credentials(self, credentials: "Credentials") -> bool:
         """Validate that credentials are working"""
+        if not self.available:
+            return False
+            
         try:
             # Try to make a simple API call
             service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
@@ -166,8 +192,11 @@ class TokenManager:
             print(f"❌ Credentials validation failed: {e}")
             return False
     
-    def get_oauth_flow(self, state: str = None) -> Flow:
+    def get_oauth_flow(self, state: str = None) -> "Flow":
         """Create OAuth2 flow for Google Drive"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - Google Drive requiere dependencias adicionales")
+            
         client_config = {
             "web": {
                 "client_id": settings.GOOGLE_CLIENT_ID,
@@ -207,6 +236,9 @@ class TokenManager:
     
     def exchange_code_for_tokens(self, authorization_code: str, user_id: str) -> Dict:
         """Exchange authorization code for tokens"""
+        if not self.available:
+            raise Exception("TokenManager no disponible - Google Drive requiere dependencias adicionales")
+            
         try:
             flow = self.get_oauth_flow()
             
