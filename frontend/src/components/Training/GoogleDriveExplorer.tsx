@@ -28,7 +28,7 @@ import {
   formatDate, 
   getFileTypeIcon,
   isFileSupported 
-} from '../../../api/google-drive-api';
+} from '@/lib/google-drive-api';
 
 interface GoogleDriveExplorerProps {
   isConnected: boolean;

@@ -13,7 +13,7 @@ import {
   Calendar,
   Mail
 } from 'lucide-react';
-import { googleDriveAPI, ConnectionStatus, formatDate } from '../../../api/google-drive-api';
+import { googleDriveAPI, ConnectionStatus, formatDate } from '@/lib/google-drive-api';
 
 interface GoogleDriveConnectorProps {
   onConnectionChange?: (connected: boolean) => void;
