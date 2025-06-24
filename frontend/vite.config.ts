@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
-import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -39,9 +38,5 @@ export default defineConfig({
         }
       }
     }
-  },
-  define: {
-    // Remover console.log en producción
-    'console.log': process.env.NODE_ENV === 'production' ? 'void 0' : 'console.log'
   }
 })
