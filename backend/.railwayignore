@@ -1,0 +1,32 @@
+# Ignorar frontend para el servicio backend
+frontend/
+frontend/**
+
+# Ignorar archivos de desarrollo
+*.log
+.env.local
+.env.development
+.env.test
+.DS_Store
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.output/
+.vercel/
+
+# Ignorar archivos temporales
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Ignorar documentos de ejemplo (para evitar redeploys innecesarios)
+ejemplos_demandas/
+data/casos_anteriores/
+
+# Ignorar archivos de testing
+test_*.py
+*_test.py
+debug_*.py 

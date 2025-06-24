@@ -1,0 +1,42 @@
+# Ignorar backend para el servicio frontend
+backend/
+backend/**
+rag/
+ingestion/
+*.py
+
+# Ignorar archivos de la raíz del proyecto
+app.py
+main.py
+requirements.txt
+Procfile
+railway.toml
+build.sh
+run.py
+
+# Ignorar documentos y datos
+ejemplos_demandas/
+data/
+temp/
+
+# Ignorar archivos de desarrollo
+*.log
+.env.local
+.env.development
+.env.test
+.DS_Store
+
+# Ignorar archivos de build (excepto el dist que necesitamos)
+node_modules/
+.next/
+.nuxt/
+.output/
+.vercel/
+
+# Ignorar archivos temporales
+*.tmp
+*.temp
+
+# Ignorar documentación no relevante para el frontend
+*.md
+!README.md 

@@ -1,5 +1,6 @@
 [build]
 builder = "nixpacks"
+watchPaths = ["backend/**", "*.py", "requirements.txt", "main.py", "rag/**", "railway.toml"]
 
 [deploy]
 startCommand = "python main.py"
