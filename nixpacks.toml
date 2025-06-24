@@ -1,13 +1,12 @@
-# Configuración explícita para proyecto full-stack React + FastAPI
+# Configuración para proyecto full-stack React + FastAPI
 [variables]
 NIXPACKS_PYTHON_VERSION = "3.12"
 PYTHONPATH = "."
 
-# Detectar Python como runtime principal
-[providers]
-python = "3.12"
+# Providers como array
+providers = ["python", "node"]
 
-# Fases de build simplificadas
+# Fases de build
 [phases.setup]
 nixPkgs = ["python312", "nodejs-18_x", "npm"]
 
