@@ -254,7 +254,7 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
       console.log('🆕 Verificando requisitos para nueva consulta...');
       
       // Importar API de verificación
-      const { chatAPI } = await import('../../lib/api');
+      const { chatAPI } = await import('@/lib/api');
       
       // Verificar si hay categorías disponibles
       const verificacion = await chatAPI.verificarCategorias();

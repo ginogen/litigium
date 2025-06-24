@@ -116,7 +116,7 @@ export function CanvasPanel() {
     setIsProcessingEdit(true);
     
     try {
-      const { editorAPI } = await import('../../lib/api');
+      const { editorAPI } = await import('@/lib/api');
       
       const command = `Agregar la siguiente información adicional al documento: ${additionalInfo}`;
       const result = await editorAPI.procesarEdicion(command, chatState.sessionId);
