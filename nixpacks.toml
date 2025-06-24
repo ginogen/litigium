@@ -1,12 +1,25 @@
+# Configuración explícita para proyecto full-stack React + FastAPI
 [variables]
 NIXPACKS_PYTHON_VERSION = "3.12"
 PYTHONPATH = "."
 
-[phases.build]
+# Detectar Python como runtime principal
+[providers]
+python = "3.12"
+
+# Fases de build simplificadas
+[phases.setup]
+nixPkgs = ["python312", "nodejs-18_x", "npm"]
+
+[phases.install] 
 cmds = [
-    "pip install --upgrade pip",
-    "pip install -r requirements.txt"
+    "npm install",
+    "python3 -m pip install --upgrade pip",
+    "python3 -m pip install -r requirements.txt"
 ]
+
+[phases.build]
+cmds = ["npm run build"]
 
 [phases.start]
 cmd = "python3 -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT" 
