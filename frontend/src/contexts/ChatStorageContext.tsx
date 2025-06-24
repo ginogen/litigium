@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useCallback, ReactNode } from 'react';
-import { supabase } from './AuthContext';
-import { useAuth } from './AuthContext';
+import { supabase } from './AuthContext.tsx';
+import { useAuth } from './AuthContext.tsx';
 
 // Tipos basados en tu esquema de Supabase (UUID)
 export interface ChatSession {
@@ -286,7 +286,7 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     if (!profile) throw new Error('User profile not loaded');
 
     // Usar la API del backend para eliminar la sesión
-    const { chatAPI } = await import('../lib/api');
+    const { chatAPI } = await import('../lib/api.ts');
     await chatAPI.eliminarSesion(sessionId);
   }, [profile]);
 
@@ -296,7 +296,7 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     console.log('📁 Moviendo sesión:', sessionId, 'a carpeta:', carpetaId);
     
     // Usar la API del backend para mover la sesión
-    const { chatAPI } = await import('../lib/api');
+    const { chatAPI } = await import('../lib/api.ts');
     await chatAPI.moverSesion(sessionId, carpetaId);
   }, [profile]);
 
@@ -465,7 +465,7 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     console.log('🗑️ Eliminación masiva:', sessionIds.length, 'sesiones');
     
     try {
-      const { chatAPI } = await import('../lib/api');
+      const { chatAPI } = await import('../lib/api.ts');
       const response = await chatAPI.eliminarSesionesMasivo(sessionIds);
       console.log(`✅ Eliminación masiva completada: ${response.deleted_count} eliminadas`);
       

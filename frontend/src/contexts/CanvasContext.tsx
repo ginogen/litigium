@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
-import { editorAPI, documentAPI, ParagraphData, EditHistoryItem } from '../lib/api';
+import { editorAPI, documentAPI, ParagraphData, EditHistoryItem } from '../lib/api.ts';
 
 // Tipos
 export type CanvasMode = 'preview' | 'editor';

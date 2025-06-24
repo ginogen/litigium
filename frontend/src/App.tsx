@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { ChatProvider } from './contexts/ChatContext';
-import { ChatStorageProvider } from './contexts/ChatStorageContext';
-import { CanvasProvider } from './contexts/CanvasContext';
-import { TextSelectionProvider } from './contexts/TextSelectionContext';
-import { ChatContainer } from './components/Chat/ChatContainer';
-import { Sidebar } from './components/Sidebar/Sidebar';
-import { CanvasPanel } from './components/Canvas/CanvasPanel';
-import { AuthForm } from './components/Auth/AuthForm';
-import { TrainingSection } from './components/Training/TrainingSection';
-import { ProfileSection } from './components/Profile/ProfileSection';
-import { GoogleCallback } from './components/Auth/GoogleCallback';
-import { useCanvas } from './contexts/CanvasContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
+import { ChatProvider } from './contexts/ChatContext.tsx';
+import { ChatStorageProvider } from './contexts/ChatStorageContext.tsx';
+import { CanvasProvider } from './contexts/CanvasContext.tsx';
+import { TextSelectionProvider } from './contexts/TextSelectionContext.tsx';
+import { ChatContainer } from './components/Chat/ChatContainer.tsx';
+import { Sidebar } from './components/Sidebar/Sidebar.tsx';
+import { CanvasPanel } from './components/Canvas/CanvasPanel.tsx';
+import { AuthForm } from './components/Auth/AuthForm.tsx';
+import { TrainingSection } from './components/Training/TrainingSection.tsx';
+import { ProfileSection } from './components/Profile/ProfileSection.tsx';
+import { GoogleCallback } from './components/Auth/GoogleCallback.tsx';
+import { useCanvas } from './contexts/CanvasContext.tsx';
 import { Loader2 } from 'lucide-react';
 
 // Configurar QueryClient con configuraciones optimizadas
