@@ -6,11 +6,11 @@
       "use": "@vercel/python"
     },
     {
-      "src": "package.json",
+      "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
         "buildCommand": "npm run build",
-        "outputDirectory": "frontend/dist"
+        "outputDirectory": "dist"
       }
     }
   ],

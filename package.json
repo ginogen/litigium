@@ -7,7 +7,5 @@
     "dev": "cd frontend && npm run dev",
     "start": "cd frontend && npm run dev"
   },
-  "dependencies": {
-    "mangum": "^0.17.0"
-  }
+  "dependencies": {}
 } 
