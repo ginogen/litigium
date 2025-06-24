@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useCallback, ReactNode } from 'react';
 import { supabase } from './AuthContext';
 import { useAuth } from './AuthContext';
 import { chatAPI } from '../lib';

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useReducer, ReactNode, useCallback } from 'react';
 import { chatAPI, categoryAPI, Category } from '../lib';
 
 // Tipos

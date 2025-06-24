@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
+import { createContext, useContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
 import { editorAPI, documentAPI, ParagraphData, EditHistoryItem } from '../lib';
 
 // Tipos
