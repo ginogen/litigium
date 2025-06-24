@@ -19,14 +19,14 @@ except ImportError:
     print("ℹ️  Mangum no disponible - OK para Railway/local deployment")
 
 # Importar todos los routers
-from routes.training_routes import router as training_router
-from routes.chat_routes import router as chat_router
-from routes.editor_routes import router as editor_router
-from routes.document_routes import router as document_router
-from routes.audio_routes import router as audio_router
-from routes.config_routes import router as config_router
-from routes.folder_routes import router as folder_router
-from routes.google_drive_routes import router as google_drive_router
+from .routes.training_routes import router as training_router
+from .routes.chat_routes import router as chat_router
+from .routes.editor_routes import router as editor_router
+from .routes.document_routes import router as document_router
+from .routes.audio_routes import router as audio_router
+from .routes.config_routes import router as config_router
+from .routes.folder_routes import router as folder_router
+from .routes.google_drive_routes import router as google_drive_router
 
 load_dotenv()
 
