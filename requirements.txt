@@ -5,8 +5,9 @@ python-multipart==0.0.6
 pydantic>=2.5.0,<3.0.0
 python-dotenv==1.0.0
 
-# Supabase (versiones flexibles para mejor compatibilidad)
-supabase>=2.0.0,<3.0.0
+# Supabase (versiones compatibles sin conflictos)
+supabase==2.8.0
+gotrue==2.9.1
 httpx>=0.25.0,<1.0.0
 
 # IA y embeddings (CRÍTICAS para el funcionamiento)

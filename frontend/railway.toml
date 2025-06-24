@@ -1,6 +1,5 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
 watchPaths = ["frontend/**"]
 
 [deploy]
@@ -10,7 +9,4 @@ restartPolicyMaxRetries = 10
 
 [env]
 NODE_ENV = "production"
-VITE_NODE_ENV = "production"
-
-[nixpacks]
-package = "nodejs" 
+VITE_NODE_ENV = "production" 
