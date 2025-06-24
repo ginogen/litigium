@@ -9,7 +9,14 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from dotenv import load_dotenv
-from mangum import Mangum
+
+# Import condicional de Mangum (solo para Vercel/Lambda)
+try:
+    from mangum import Mangum
+    MANGUM_AVAILABLE = True
+except ImportError:
+    MANGUM_AVAILABLE = False
+    print("ℹ️  Mangum no disponible - OK para Railway/local deployment")
 
 # Importar todos los routers
 from routes.training_routes import router as training_router
@@ -93,8 +100,12 @@ async def global_exception_handler(request, exc):
         content={"detail": f"Error interno del servidor: {str(exc)}"}
     )
 
-# Handler para Vercel serverless
-handler = Mangum(app)
+# Handler para Vercel serverless (solo si Mangum está disponible)
+if MANGUM_AVAILABLE:
+    handler = Mangum(app)
+    print("✅ Mangum handler creado para Vercel/Lambda")
+else:
+    print("ℹ️  Sin Mangum handler - deployment para Railway/uvicorn")
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
