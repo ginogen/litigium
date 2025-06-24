@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 import { 
   Cloud, 
   CheckCircle, 
@@ -13,7 +13,7 @@ import {
   Calendar,
   Mail
 } from 'lucide-react';
-import { googleDriveAPI, ConnectionStatus, formatDate } from '../../lib/google-drive-api';
+import { googleDriveAPI, ConnectionStatus, formatDate } from '@/lib/google-drive-api';
 
 interface GoogleDriveConnectorProps {
   onConnectionChange?: (connected: boolean) => void;

@@ -1,6 +1,6 @@
 import React, { useState, memo } from 'react';
-import { ParagraphData } from '../../lib';
-import { cn } from '../../lib/utils';
+import { ParagraphData } from '@/lib';
+import { cn } from '@/lib/utils';
 
 interface ParagraphItemProps {
   paragraph: ParagraphData;

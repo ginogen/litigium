@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Mic, MicOff, Square, Loader2, Volume2, Play, Pause, RotateCcw } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 import { useAudioRecording } from '../../hooks/useAudioRecording';
-import { audioAPI } from '../../lib/audio-api';
+import { audioAPI } from '@/lib/audio-api';
 
 interface AudioRecorderProps {
   onTranscriptionComplete: (transcription: string) => void;

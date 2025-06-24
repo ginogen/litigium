@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { cn } from '../../lib/utils';
-import { googleDriveAPI, GoogleDriveFile, GoogleDriveBreadcrumb } from '../../lib/google-drive-api';
+import { cn } from '@/lib/utils';
+import { googleDriveAPI, GoogleDriveFile, GoogleDriveBreadcrumb } from '@/lib/google-drive-api';
 import { Folder, ChevronRight, Home, Plus, X, ArrowLeft, Check, Search } from 'lucide-react';
 
 interface GoogleDriveFolderPickerProps {

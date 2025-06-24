@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChatStorage, ChatFolder, ChatSession } from '../../contexts/ChatStorageContext';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronRight, Plus, FolderOpen, Folder, MessageSquare, Upload, User, Menu, X, FileText, Calendar, LogOut, Pencil, Trash2, FolderPlus, MoreVertical, Move, Check, Square, CheckSquare } from 'lucide-react';
 import { SidebarSkeleton } from '../ui/Skeleton';
 import type { AppSection } from '../../App';

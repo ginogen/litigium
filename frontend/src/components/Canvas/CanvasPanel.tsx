@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useCanvas } from '../../contexts/CanvasContext';
 import { useChat } from '../../contexts/ChatContext';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 import { ZoomIn, ZoomOut, FileText, Download, X, Plus, MessageSquare, CloudUpload, Globe } from 'lucide-react';
 import { GoogleDriveFolderPicker } from './GoogleDriveFolderPicker';
 import { GlobalEditPanel } from './GlobalEditPanel';
-import { googleDriveAPI, textToBase64 } from '../../lib/google-drive-api';
+import { googleDriveAPI, textToBase64 } from '@/lib/google-drive-api';
 
 export function CanvasPanel() {
   const { state, close, downloadDocument, loadCurrentDocument } = useCanvas();
