@@ -1,35 +1,48 @@
 # Dockerfile para Railway - Proyecto Full-Stack React + FastAPI
-FROM python:3.12-slim
-
-# Instalar Node.js para el frontend
-RUN apt-get update && apt-get install -y \
-    nodejs \
-    npm \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Establecer directorio de trabajo
-WORKDIR /app
-
-# Copiar archivos de configuración primero (para cache)
-COPY package.json package-lock.json* ./
-COPY requirements.txt ./
+FROM node:18-slim AS frontend-builder
 
 # Instalar dependencias del frontend
-RUN npm install
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci --only=production
 
-# Instalar dependencias del backend
-RUN python -m pip install --upgrade pip
-RUN pip install -r requirements.txt
-
-# Copiar el resto del código
-COPY . .
-
-# Build del frontend
+# Copiar código del frontend y buildear
+COPY frontend/ .
 RUN npm run build
+
+# Imagen final con Python
+FROM python:3.12-slim
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configurar directorio de trabajo
+WORKDIR /app
+
+# Copiar requirements y instalar dependencias de Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar código del backend
+COPY backend/ ./backend/
+COPY rag/ ./rag/
+COPY ingestion/ ./ingestion/
+COPY config.py .
+
+# Copiar build del frontend desde la etapa anterior
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+
+# Crear directorio para archivos temporales
+RUN mkdir -p /app/temp
 
 # Exponer puerto
 EXPOSE $PORT
+
+# Variables de entorno
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
 # Comando de inicio
 CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "$PORT"] 

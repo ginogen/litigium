@@ -8,7 +8,7 @@ providers = "python,node"
 
 # Fases de build
 [phases.setup]
-nixPkgs = ["python312", "nodejs-18_x", "npm"]
+nixPkgs = ["python312", "nodejs-18_x"]
 
 [phases.install] 
 cmds = [
