@@ -279,4 +279,48 @@ else:
                 raise Exception("Google Drive no disponible - instale cryptography y google-auth-oauthlib")
             return method_not_available
     
-    token_manager = MockTokenManager() 
+    token_manager = MockTokenManager()
+
+def recreate_token_manager():
+    """Recreates the token_manager instance with current import status"""
+    global token_manager, CRYPTOGRAPHY_AVAILABLE, GOOGLE_AUTH_AVAILABLE
+    
+    # Re-check cryptography
+    try:
+        from cryptography.fernet import Fernet
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        CRYPTOGRAPHY_AVAILABLE = True
+        print("✅ Cryptography disponible en recreación")
+    except ImportError as e:
+        CRYPTOGRAPHY_AVAILABLE = False
+        print(f"❌ Cryptography no disponible en recreación: {e}")
+    
+    # Re-check google-auth
+    try:
+        import google.auth.transport.requests
+        from google.oauth2.credentials import Credentials
+        from google_auth_oauthlib.flow import Flow
+        from googleapiclient.discovery import build
+        GOOGLE_AUTH_AVAILABLE = True
+        print("✅ Google Auth disponible en recreación")
+    except ImportError as e:
+        GOOGLE_AUTH_AVAILABLE = False
+        print(f"❌ Google Auth no disponible en recreación: {e}")
+    
+    # Recreate instance
+    if CRYPTOGRAPHY_AVAILABLE and GOOGLE_AUTH_AVAILABLE:
+        print("🔄 Recreando TokenManager real...")
+        token_manager = TokenManager()
+        print(f"✅ TokenManager recreado: {type(token_manager).__name__}, available={token_manager.available}")
+    else:
+        print("🔄 Recreando MockTokenManager...")
+        token_manager = MockTokenManager()
+        print(f"⚠️ MockTokenManager recreado: {type(token_manager).__name__}")
+    
+    return {
+        "CRYPTOGRAPHY_AVAILABLE": CRYPTOGRAPHY_AVAILABLE,
+        "GOOGLE_AUTH_AVAILABLE": GOOGLE_AUTH_AVAILABLE,
+        "token_manager_type": type(token_manager).__name__,
+        "available": getattr(token_manager, 'available', False)
+    } 

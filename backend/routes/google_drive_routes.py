@@ -757,4 +757,103 @@ async def get_folders(
         raise
     except Exception as e:
         print(f"❌ Error getting folders: {e}")
-        raise HTTPException(status_code=500, detail=f"Error getting folders: {e}") 
+        raise HTTPException(status_code=500, detail=f"Error getting folders: {e}")
+
+@router.get("/debug/dependencies")
+async def debug_google_drive_dependencies():
+    """Debug endpoint para verificar dependencias de Google Drive"""
+    debug_info = {
+        "timestamp": datetime.now().isoformat(),
+        "dependencies_check": {}
+    }
+    
+    # Test cryptography
+    try:
+        from cryptography.fernet import Fernet
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        debug_info["dependencies_check"]["cryptography"] = {
+            "available": True,
+            "fernet": str(type(Fernet)),
+            "hashes": str(type(hashes)),
+            "test_key": Fernet.generate_key().decode()[:20] + "..."
+        }
+    except Exception as e:
+        debug_info["dependencies_check"]["cryptography"] = {
+            "available": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+    
+    # Test google-auth
+    try:
+        import google.auth.transport.requests
+        from google.oauth2.credentials import Credentials
+        from google_auth_oauthlib.flow import Flow
+        from googleapiclient.discovery import build
+        debug_info["dependencies_check"]["google_auth"] = {
+            "available": True,
+            "credentials": str(type(Credentials)),
+            "flow": str(type(Flow)),
+            "build": str(type(build)),
+            "requests": str(type(google.auth.transport.requests))
+        }
+    except Exception as e:
+        debug_info["dependencies_check"]["google_auth"] = {
+            "available": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+    
+    # Test token_manager status
+    from ..services.token_manager import token_manager, CRYPTOGRAPHY_AVAILABLE, GOOGLE_AUTH_AVAILABLE
+    debug_info["token_manager"] = {
+        "type": type(token_manager).__name__,
+        "available": getattr(token_manager, 'available', False),
+        "CRYPTOGRAPHY_AVAILABLE": CRYPTOGRAPHY_AVAILABLE,
+        "GOOGLE_AUTH_AVAILABLE": GOOGLE_AUTH_AVAILABLE
+    }
+    
+    # Test environment variables
+    debug_info["environment"] = {
+        "GOOGLE_CLIENT_ID": "SET" if settings.GOOGLE_CLIENT_ID else "NOT_SET",
+        "GOOGLE_CLIENT_SECRET": "SET" if settings.GOOGLE_CLIENT_SECRET else "NOT_SET",
+        "GOOGLE_REDIRECT_URI": settings.GOOGLE_REDIRECT_URI or "NOT_SET",
+        "TOKEN_ENCRYPTION_KEY": "SET" if settings.TOKEN_ENCRYPTION_KEY else "NOT_SET"
+    }
+    
+    # Test google drive service
+    try:
+        from ..services.google_drive_service import google_drive_service
+        debug_info["google_drive_service"] = {
+            "type": type(google_drive_service).__name__,
+            "available": getattr(google_drive_service, 'available', False)
+        }
+    except Exception as e:
+        debug_info["google_drive_service"] = {
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+    
+    return debug_info
+
+@router.post("/debug/reload-token-manager")
+async def reload_token_manager():
+    """Fuerza la recarga del token_manager"""
+    try:
+        # Usar la función de recreación
+        from ..services.token_manager import recreate_token_manager
+        
+        result = recreate_token_manager()
+        
+        return {
+            "success": True,
+            "message": "Token manager recreado exitosamente",
+            "result": result
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        } 
