@@ -10,8 +10,10 @@ requests==2.31.0
 # Adaptador para funciones serverless
 mangum==0.17.0
 
-# Supabase y OpenAI
-supabase==2.0.2
+# Supabase y OpenAI (versiones compatibles)
+supabase>=2.9.0,<3.0.0
+gotrue>=2.9.0,<3.0.0
+httpx>=0.25.0,<1.0.0
 openai==1.51.0
 
 # Dependencias para compatibilidad

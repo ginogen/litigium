@@ -11,11 +11,10 @@ aiofiles==23.2.1
 mangum==0.17.0
 requests==2.31.0
 
-# Supabase y dependencias compatibles
-supabase==2.9.1
-httpx==0.25.2
-gotrue==2.8.1
-postgrest==0.13.2
+# Supabase y dependencias compatibles (versiones sincronizadas)
+supabase>=2.9.0,<3.0.0
+httpx>=0.25.0,<1.0.0
+postgrest>=0.13.0,<1.0.0
 
 openai==1.51.0
 
