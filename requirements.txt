@@ -17,8 +17,6 @@ langchain>=0.1.0
 langchain-core>=0.1.0
 langchain-openai>=0.0.5
 
-# Dependencias críticas para servicios
-cryptography>=3.0.0
 
 # Procesamiento básico de documentos
 python-docx>=1.0.0
@@ -28,6 +26,38 @@ requests>=2.31.0
 # Utilidades básicas
 tqdm>=4.0.0
 aiofiles>=23.0.0
+
+# Base de datos vectorial
+qdrant-client==1.6.9
+
+# Dependencias base para encriptación
+cffi>=1.15.0
+pycparser>=2.21
+
+# Encriptación para tokens de Google Drive
+cryptography==45.0.4
+
+# Google Auth dependencies
+cachetools>=4.2.0,<6.0.0
+pyasn1>=0.4.6
+pyasn1-modules>=0.2.1
+rsa>=3.1.4,<5.0.0
+six>=1.9.0
+
+# Google Drive API
+google-auth==2.25.2
+google-auth-oauthlib==1.1.0
+google-api-python-client==2.110.0
+
+# Dependencias adicionales para Google API
+cachetools==5.3.2
+pyasn1==0.5.1
+pyasn1-modules==0.3.0
+rsa==4.9
+six==1.16.0
+googleapis-common-protos==1.62.0
+protobuf==4.25.1
+urllib3==2.1.0
 
 # Audio básico (sin dependencias pesadas)
 # pydub==0.25.1  # Comentado temporalmente para Railway
