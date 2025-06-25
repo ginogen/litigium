@@ -18,15 +18,18 @@ postgrest>=0.13.0,<1.0.0
 
 openai==1.51.0
 
-# Procesamiento de documentos (agregar si necesario)
-# PyPDF2==3.0.1
-# python-docx==1.1.0
-# Pillow==10.1.0
+# Procesamiento de documentos
+PyPDF2==3.0.1
+python-docx==1.1.0
+Pillow==10.1.0
 
-# Base de datos vectorial (agregar si necesario)
-# qdrant-client==1.6.9
+# Base de datos vectorial
+qdrant-client==1.6.9
 
-# Google Drive (agregar si necesario)
-# google-auth==2.25.2
-# google-auth-oauthlib==1.1.0
-# google-api-python-client==2.110.0 
+# Encriptación para tokens de Google Drive
+cryptography==41.0.8
+
+# Google Drive API
+google-auth==2.25.2
+google-auth-oauthlib==1.1.0
+google-api-python-client==2.110.0 
