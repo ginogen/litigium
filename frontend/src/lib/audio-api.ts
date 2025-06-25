@@ -39,7 +39,13 @@ class AudioAPI {
       const headers = await getAuthHeaders();
       delete headers['Content-Type']; // Let browser set Content-Type for FormData
 
-      const response = await fetch('/api/audio/transcribir', {
+      // TEMPORAL: Usar endpoint simplificado en Railway
+      const isProduction = window.location.hostname.includes('railway.app') || window.location.hostname.includes('up.railway.app');
+      const endpoint = isProduction ? '/api/audio/test-transcribir-simple' : '/api/audio/transcribir';
+      
+      console.log(`🎯 Usando endpoint: ${endpoint} (isProduction: ${isProduction})`);
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: formData,
@@ -50,10 +56,19 @@ class AudioAPI {
         throw new Error(errorData.detail || `Error del servidor: ${response.status}`);
       }
 
-      const data: TranscripcionResponse = await response.json();
+      const data = await response.json();
       console.log('✅ Respuesta del servidor:', data);
       
-      if (data.exito) {
+      // Manejar respuesta del endpoint simplificado
+      if (isProduction && data.exito) {
+        console.log('🎯 Transcripción exitosa (endpoint simple):', data.texto_transcrito);
+        return {
+          success: true,
+          transcription: data.texto_transcrito,
+          duration: 0
+        };
+      } else if (!isProduction && data.exito) {
+        // Endpoint normal
         console.log('🎯 Transcripción exitosa:', data.texto_transcrito);
         return {
           success: true,
@@ -64,7 +79,7 @@ class AudioAPI {
         console.warn('⚠️ Transcripción falló');
         return {
           success: false,
-          error: 'Error en la transcripción'
+          error: data.error || 'Error en la transcripción'
         };
       }
     } catch (error) {
