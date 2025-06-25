@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build"
+buildCommand = "npm install --no-audit --no-fund && npm run build"
 watchPaths = ["frontend/**"]
 
 [deploy]
@@ -10,4 +10,7 @@ restartPolicyMaxRetries = 10
 
 [env]
 NODE_ENV = "production"
-VITE_NODE_ENV = "production" 
+VITE_NODE_ENV = "production"
+NPM_CONFIG_CACHE = "/tmp/npm-cache"
+NPM_CONFIG_UPDATE_NOTIFIER = "false"
+NPM_CONFIG_AUDIT = "false" 

@@ -1,0 +1,14 @@
+# Configuración de respaldo más simple si la principal falla
+
+[build]
+builder = "NIXPACKS"
+# Sin buildCommand - Railway detecta automáticamente
+
+[deploy]
+startCommand = "npm run serve"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[env]
+NODE_ENV = "production"
+VITE_NODE_ENV = "production" 
