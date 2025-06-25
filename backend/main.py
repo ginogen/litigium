@@ -1,6 +1,7 @@
 # Configurar el path para importar módulos del directorio padre
 import sys
 import os
+from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import FastAPI
@@ -41,20 +42,30 @@ app = FastAPI(
 allowed_origins = [
     "http://localhost:3000", 
     "http://localhost:5173",
-    "https://*.vercel.app",
-    "https://*.railway.app",
-    "https://*.up.railway.app",
     os.getenv("FRONTEND_URL", ""),
     os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
 ]
 
-# Filtrar orígenes vacíos
-allowed_origins = [origin for origin in allowed_origins if origin]
+# Añadir orígenes específicos para Railway y Vercel
+additional_origins = [
+    "https://aibot-frontend-production.up.railway.app",
+    "https://legal-assistant-frontend.up.railway.app",
+    "https://litigium-frontend.up.railway.app",
+    "https://frontend-production.up.railway.app"
+]
 
+allowed_origins.extend(additional_origins)
+
+# Filtrar orígenes vacíos
+allowed_origins = [origin for origin in allowed_origins if origin and origin.strip()]
+
+print(f"🔧 CORS configurado para orígenes: {allowed_origins}")
+
+# CORS más permisivo temporalmente para debug
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],  # Temporalmente permisivo para debug
+    allow_credentials=False,  # Debe ser False cuando allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -124,6 +135,31 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "message": "Legal Assistant AI Backend is running"}
+
+# Endpoint de debug temporal
+@app.get("/debug/cors")
+async def debug_cors():
+    return {
+        "cors_origins": allowed_origins,
+        "cors_configured": True,
+        "message": "CORS debug endpoint",
+        "timestamp": str(datetime.now())
+    }
+
+# Endpoint de debug para categorías sin auth
+@app.get("/debug/categories-test")
+async def debug_categories():
+    try:
+        return {
+            "message": "Categories endpoint test",
+            "available": True,
+            "endpoints": {
+                "real_endpoint": "/api/training/categories",
+                "requires_auth": True
+            }
+        }
+    except Exception as e:
+        return {"error": str(e), "message": "Categories test failed"}
 
 # Manejador de errores global
 @app.exception_handler(Exception)
