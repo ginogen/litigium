@@ -3,7 +3,7 @@ builder = "nixpacks"
 watchPaths = ["backend/**", "*.py", "requirements.txt", "main.py", "rag/**", "railway.toml"]
 
 [deploy]
-startCommand = "python main.py"
+startCommand = "cd backend && python main.py"
 
 [build.environment]
 PYTHONPATH = "."
