@@ -297,4 +297,176 @@ async def obtener_formatos_audio():
     return {
         "success": True,
         "formatos_audio": formatos_soportados
-    } 
+    }
+
+# ===== ENDPOINT TEMPORAL DE DEBUG PARA AUDIO =====
+@router.get("/debug-audio-status")
+async def debug_audio_status():
+    """Endpoint temporal para diagnosticar problemas de audio"""
+    import os
+    import tempfile
+    
+    diagnostico = {
+        "timestamp": datetime.now().isoformat(),
+        "environment": {
+            "openai_api_key": "✅ Configurada" if os.getenv("OPENAI_API_KEY") else "❌ No configurada",
+            "temp_dir": tempfile.gettempdir(),
+            "temp_dir_writable": None,
+            "pydub_available": None,
+            "ffmpeg_available": None
+        },
+        "dependencies": {},
+        "audio_service": {},
+        "temp_file_test": {},
+        "whisper_test": "No ejecutado"
+    }
+    
+    # Test 1: Directorio temporal
+    try:
+        with tempfile.NamedTemporaryFile(delete=True) as tmp:
+            tmp.write(b"test")
+            diagnostico["environment"]["temp_dir_writable"] = "✅ Escribible"
+    except Exception as e:
+        diagnostico["environment"]["temp_dir_writable"] = f"❌ Error: {str(e)}"
+    
+    # Test 2: pydub
+    try:
+        from pydub import AudioSegment
+        diagnostico["environment"]["pydub_available"] = "✅ Disponible"
+        diagnostico["dependencies"]["pydub"] = "✅ OK"
+    except ImportError as e:
+        diagnostico["environment"]["pydub_available"] = f"❌ Error: {str(e)}"
+        diagnostico["dependencies"]["pydub"] = f"❌ ImportError: {str(e)}"
+    
+    # Test 3: ffmpeg (usado por pydub)
+    try:
+        import subprocess
+        result = subprocess.run(['ffmpeg', '-version'], capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            diagnostico["environment"]["ffmpeg_available"] = "✅ Disponible"
+        else:
+            diagnostico["environment"]["ffmpeg_available"] = "❌ No funciona"
+    except Exception as e:
+        diagnostico["environment"]["ffmpeg_available"] = f"❌ Error: {str(e)}"
+    
+    # Test 4: AudioService
+    try:
+        from rag.audio_service import get_audio_service
+        audio_service = get_audio_service()
+        diagnostico["audio_service"]["creation"] = "✅ Servicio creado exitosamente"
+        diagnostico["audio_service"]["openai_client"] = "✅ Cliente OpenAI inicializado"
+    except Exception as e:
+        diagnostico["audio_service"]["creation"] = f"❌ Error: {str(e)}"
+    
+    # Test 5: Archivo temporal de audio
+    try:
+        # Crear un archivo de audio muy básico (WAV header mínimo)
+        wav_header = b'RIFF\x24\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x40\x1f\x00\x00\x80\x3e\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00'
+        
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+            tmp.write(wav_header)
+            temp_path = tmp.name
+        
+        # Verificar que se puede leer
+        with open(temp_path, 'rb') as f:
+            content = f.read()
+            diagnostico["temp_file_test"]["size"] = len(content)
+        
+        # Limpiar
+        os.unlink(temp_path)
+        diagnostico["temp_file_test"]["status"] = "✅ Archivo temporal creado y leído exitosamente"
+        
+    except Exception as e:
+        diagnostico["temp_file_test"]["status"] = f"❌ Error: {str(e)}"
+    
+    return {
+        "debug_info": diagnostico,
+        "instrucciones": [
+            "Ejecuta este endpoint desde tu frontend:",
+            "fetch('/api/audio/debug-audio-status').then(r => r.json()).then(console.log)",
+            "O visita directamente: https://tu-app.railway.app/api/audio/debug-audio-status",
+            "Comparte el resultado para diagnosticar el problema específico"
+        ]
+    }
+
+@router.post("/test-transcribir-simple")
+async def test_transcribir_simple(
+    archivo_audio: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Endpoint simplificado para testear transcripción sin complejidades"""
+    logs = []
+    
+    try:
+        logs.append("🎯 Iniciando test de transcripción simple")
+        
+        # Leer archivo
+        contenido = await archivo_audio.read()
+        logs.append(f"📁 Archivo leído: {len(contenido)} bytes, tipo: {archivo_audio.content_type}")
+        
+        # Verificar OpenAI API Key
+        import os
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise Exception("OPENAI_API_KEY no configurada")
+        logs.append("🔑 OPENAI_API_KEY encontrada")
+        
+        # Crear archivo temporal con extensión correcta basada en content_type
+        if 'webm' in archivo_audio.content_type:
+            extension = '.webm'
+        elif 'mp4' in archivo_audio.content_type:
+            extension = '.mp4'
+        elif 'wav' in archivo_audio.content_type:
+            extension = '.wav'
+        elif 'mp3' in archivo_audio.content_type:
+            extension = '.mp3'
+        else:
+            extension = '.webm'  # Default
+            
+        logs.append(f"🎵 Extensión detectada: {extension}")
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as temp_file:
+            temp_file.write(contenido)
+            temp_path = temp_file.name
+            
+        logs.append(f"📂 Archivo temporal creado: {temp_path}")
+        
+        try:
+            # Llamar directamente a OpenAI Whisper
+            from openai import OpenAI
+            client = OpenAI(api_key=api_key)
+            
+            with open(temp_path, "rb") as audio_file:
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language="es"
+                )
+            
+            transcripcion = transcript.text.strip()
+            logs.append(f"✅ Transcripción exitosa: {len(transcripcion)} caracteres")
+            
+            return {
+                "exito": True,
+                "texto_transcrito": transcripcion,
+                "logs": logs,
+                "metadata": {
+                    "archivo_size": len(contenido),
+                    "archivo_tipo": archivo_audio.content_type,
+                    "extension_usada": extension
+                }
+            }
+            
+        finally:
+            # Limpiar
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+                logs.append("🗑️ Archivo temporal eliminado")
+            
+    except Exception as e:
+        logs.append(f"❌ Error: {str(e)}")
+        return {
+            "exito": False,
+            "error": str(e),
+            "logs": logs
+        } 
