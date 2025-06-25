@@ -142,10 +142,11 @@ else:
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
+    # Usar el objeto app directamente en lugar de string cuando se ejecuta como módulo
     uvicorn.run(
-        "main:app", 
+        app, 
         host="0.0.0.0", 
         port=port, 
-        reload=True,
+        reload=False,  # Disabled reload for production
         log_level="info"
     ) # Force backend redeploy Tue Jun 24 21:12:34 -03 2025
