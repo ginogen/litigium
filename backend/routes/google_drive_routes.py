@@ -181,7 +181,7 @@ async def update_connection_tokens(user_id: str, credentials):
 # ================== ROUTES ==================
 
 @router.get("/auth-url")
-async def get_google_auth_url(current_user: User = Depends(get_current_user)):
+async def get_google_auth_url():
     """Generate OAuth2 authorization URL for Google Drive"""
     try:
         # Validate Google Drive configuration
@@ -191,7 +191,9 @@ async def get_google_auth_url(current_user: User = Depends(get_current_user)):
                 detail="Google Drive integration not configured. Please contact administrator."
             )
         
-        auth_url = token_manager.get_authorization_url(current_user.id)
+        # Use a temporary ID for public auth URL generation
+        temp_user_id = "public_auth"
+        auth_url = token_manager.get_authorization_url(temp_user_id)
         
         return {
             "success": True,
