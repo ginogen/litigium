@@ -30,8 +30,8 @@ qdrant-client==1.6.9
 cffi>=1.15.0
 pycparser>=2.21
 
-# Encriptación para tokens de Google Drive  
-cryptography>=41.0.0,<42.0.0
+# Encriptación para tokens de Google Drive
+cryptography==45.0.4
 
 # Google Auth dependencies
 cachetools>=4.2.0,<6.0.0
@@ -41,11 +41,16 @@ rsa>=3.1.4,<5.0.0
 six>=1.9.0
 
 # Google Drive API
-google-auth>=2.23.0,<3.0.0
-google-auth-oauthlib>=1.0.0,<2.0.0
-google-api-python-client>=2.100.0,<3.0.0
+google-auth==2.25.2
+google-auth-oauthlib==1.1.0
+google-api-python-client==2.110.0
 
 # Dependencias adicionales para Google API
-googleapis-common-protos>=1.56.0
-protobuf>=3.19.0,<5.0.0
-urllib3>=1.21.1,<3.0.0 
+cachetools==5.3.2
+pyasn1==0.5.1
+pyasn1-modules==0.3.0
+rsa==4.9
+six==1.16.0
+googleapis-common-protos==1.62.0
+protobuf==4.25.1
+urllib3==2.1.0
