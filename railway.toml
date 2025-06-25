@@ -3,7 +3,7 @@ builder = "nixpacks"
 watchPaths = ["backend/**", "*.py", "requirements.txt", "main.py", "rag/**", "railway.toml"]
 
 [deploy]
-startCommand = "cd backend && python main.py"
+startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT --no-access-log"
 
 [build.environment]
 PYTHONPATH = "."
