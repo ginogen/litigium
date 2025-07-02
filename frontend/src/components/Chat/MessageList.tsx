@@ -82,8 +82,9 @@ const MessageBubble = memo(({ message }: { message: Message }) => {
             </div>
           )}
 
-          {/* Opciones de categorías para el primer mensaje del bot */}
-          {isFirstBotMessage && !message.options && chatState.categories.length > 0 && (
+          {/* Opciones de categorías para el primer mensaje del bot - solo si no es el mensaje inicial */}
+          {isFirstBotMessage && !message.options && chatState.categories.length > 0 && 
+           !message.text.includes('¡Hola doctor!') && (
             <div className="grid gap-3 mt-4 max-w-md">
               {chatState.categories.map((category) => (
                 <button
@@ -189,52 +190,13 @@ export const MessageList = memo(({ messages }: MessageListProps) => {
               <div className="flex justify-center py-8">
                 <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : state.categories.length > 0 ? (
-              <>
-                <p className="text-gray-300 mb-6">
-                  Selecciona el tipo de demanda en la que necesitas ayuda:
-                </p>
-                <div className="grid gap-4 max-w-md mx-auto">
-                  {state.categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => selectOption(`Quiero ayuda con ${category.nombre}`)}
-                      className="p-4 border border-gray-500 rounded-xl hover:bg-gray-600 transition-all hover:border-blue-400 text-left"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div 
-                          className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-medium"
-                          style={{ backgroundColor: `${category.color}20`, color: category.color }}
-                        >
-                          {category.icon}
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-white">{category.nombre}</h3>
-                          {category.descripcion && (
-                            <p className="text-sm text-gray-300 mt-1">{category.descripcion}</p>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-8 p-4 bg-blue-900/30 rounded-xl">
-                  <p className="text-sm text-blue-300 text-center">
-                    💡 También puedes escribir directamente tu consulta legal
-                  </p>
-                </div>
-              </>
             ) : (
               <div className="text-center">
-                <p className="text-gray-300 mb-6">
-                  Configura tus categorías en "Entrenar" o comienza con una consulta general
-                </p>
-                <button 
-                  onClick={() => selectOption("Necesito ayuda legal")}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                >
-                  Comenzar consulta
-                </button>
+                <div className="p-4 bg-gray-700 rounded-xl">
+                  <p className="text-sm text-gray-300 text-center">
+                    💡 Escriba su consulta para comenzar
+                  </p>
+                </div>
               </div>
             )}
           </div>

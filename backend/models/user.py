@@ -11,6 +11,7 @@ class User(BaseModel):
     created_at: datetime
     
 class UserProfile(BaseModel):
+    # CAMPOS BÁSICOS EXISTENTES
     id: str
     user_id: str
     nombre_completo: str
@@ -29,4 +30,17 @@ class UserProfile(BaseModel):
     formato_demanda_preferido: str = 'formal'
     created_at: datetime
     updated_at: datetime
-    activo: bool = True 
+    activo: bool = True
+    
+    # NUEVOS CAMPOS PARA WORKFLOW ABOGADO (TODOS OPCIONALES)
+    tomo: Optional[str] = None
+    folio: Optional[str] = None
+    condicion_fiscal: Optional[str] = None  # "Responsable Inscripto", "Monotributista", etc.
+    cuit: Optional[str] = None
+    legajo: Optional[str] = None
+    domicilio_legal: Optional[str] = None  # Diferente de domicilio_profesional
+    nombre_estudio: Optional[str] = None
+    telefono_contacto: Optional[str] = None  # Para demandas (auto-rellena desde telefono)
+    email_contacto: Optional[str] = None  # Para demandas (auto-rellena desde email)
+    telefono_secundario: Optional[str] = None
+    email_secundario: Optional[str] = None 

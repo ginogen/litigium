@@ -22,6 +22,7 @@ except ImportError:
 # Importar todos los routers
 from .routes.training_routes import router as training_router
 from .routes.chat_routes import router as chat_router
+from .routes.chat_image_upload_routes import router as chat_upload_router
 from .routes.editor_routes import router as editor_router
 from .routes.document_routes import router as document_router
 from .routes.audio_routes import router as audio_router
@@ -73,6 +74,7 @@ app.add_middleware(
 # Registrar todos los routers
 app.include_router(config_router)      # Configuración y sistema
 app.include_router(chat_router)        # Chat e IA  
+app.include_router(chat_upload_router) # Upload múltiple de imágenes en chat
 app.include_router(editor_router)      # Editor granular
 app.include_router(document_router)    # Gestión de documentos
 app.include_router(audio_router)       # Procesamiento de audio

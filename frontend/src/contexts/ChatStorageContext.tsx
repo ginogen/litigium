@@ -118,11 +118,16 @@ interface ChatStorageProviderProps {
 }
 
 export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, isLoading } = useAuth();
 
   // Folders
   const createFolder = useCallback(async (name: string, color?: string): Promise<ChatFolder> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { data, error } = await supabase
       .from('carpetas')
@@ -140,10 +145,15 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
 
     if (error) throw error;
     return data;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const getFolders = useCallback(async (): Promise<ChatFolder[]> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     console.log('🔍 ChatStorageContext.getFolders - profile.id:', profile.id);
 
@@ -168,10 +178,15 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     }
 
     return data || [];
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const updateFolder = useCallback(async (id: string, data: Partial<ChatFolder>): Promise<void> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { error } = await supabase
       .from('carpetas')
@@ -180,10 +195,15 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
       .eq('abogado_id', profile.id);
 
     if (error) throw error;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const deleteFolder = useCallback(async (id: string): Promise<void> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { error } = await supabase
       .from('carpetas')
@@ -192,11 +212,16 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
       .eq('abogado_id', profile.id);
 
     if (error) throw error;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   // Sessions
   const createSession = useCallback(async (titulo: string, carpetaId?: string): Promise<ChatSession> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     // Generar session_id único
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -218,7 +243,7 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
 
     if (error) throw error;
     return data;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const getSessions = useCallback(async (carpetaId?: string): Promise<ChatSession[]> => {
     if (!profile) throw new Error('User profile not loaded');
@@ -256,7 +281,12 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
   }, [profile]);
 
   const updateSession = useCallback(async (id: string, data: Partial<ChatSession>): Promise<void> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     // Buscar la sesión por ID para obtener el session_id
     const { data: sessionData, error: fetchError } = await supabase
@@ -281,23 +311,33 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     if (!response.ok) {
       throw new Error('Error updating session');
     }
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const deleteSession = useCallback(async (sessionId: string): Promise<void> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     // Usar la API del backend para eliminar la sesión
     await chatAPI.eliminarSesion(sessionId);
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const moveSession = useCallback(async (sessionId: string, carpetaId: string | null): Promise<void> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     console.log('📁 Moviendo sesión:', sessionId, 'a carpeta:', carpetaId);
     
     // Usar la API del backend para mover la sesión
     await chatAPI.moverSesion(sessionId, carpetaId);
-  }, [profile]);
+  }, [profile, isLoading]);
 
   // Messages
   const saveMessage = useCallback(async (
@@ -306,7 +346,12 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     mensaje: string,
     metadata?: any
   ): Promise<ChatMessage> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { data, error } = await supabase
       .from('chat_mensajes')
@@ -323,7 +368,7 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
 
     if (error) throw error;
     return data;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const getMessages = useCallback(async (sessionId: string): Promise<ChatMessage[]> => {
     const { data, error } = await supabase
@@ -350,7 +395,12 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     sessionId: string,
     textodemanda: string
   ): Promise<Document> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { data, error } = await supabase
       .from('demandas_generadas')
@@ -370,7 +420,7 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
 
     if (error) throw error;
     return data;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const getDocument = useCallback(async (sessionId: string): Promise<Document | null> => {
     const { data, error } = await supabase
@@ -384,7 +434,12 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
   }, []);
 
   const updateDocument = useCallback(async (sessionId: string, textodemanda: string): Promise<void> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { error } = await supabase
       .from('demandas_generadas')
@@ -396,10 +451,15 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
       .eq('abogado_id', profile.id);
 
     if (error) throw error;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const deleteDocument = useCallback(async (id: string): Promise<void> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { error } = await supabase
       .from('demandas_generadas')
@@ -408,11 +468,16 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
       .eq('abogado_id', profile.id);
 
     if (error) throw error;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   // Training documents
   const uploadTrainingDocument = useCallback(async (file: File, tipodemanda: string, categoria?: string): Promise<string> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const fileName = `${profile.id}/${tipodemanda}/${Date.now()}_${file.name}`;
     
@@ -444,10 +509,15 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
     if (dbError) throw dbError;
 
     return fileName;
-  }, [profile]);
+  }, [profile, isLoading]);
 
   const getTrainingDocuments = useCallback(async (): Promise<TrainingDocument[]> => {
-    if (!profile) throw new Error('User profile not loaded');
+    if (!profile) {
+      if (isLoading) {
+        throw new Error('El perfil se está cargando. Por favor, espera un momento.');
+      }
+      throw new Error('Perfil de usuario no encontrado. Por favor, inicia sesión nuevamente.');
+    }
 
     const { data, error } = await supabase
       .from('documentos_entrenamiento')
@@ -457,7 +527,7 @@ export function ChatStorageProvider({ children }: ChatStorageProviderProps) {
 
     if (error) throw error;
     return data || [];
-  }, [profile]);
+  }, [profile, isLoading]);
 
   // Bulk delete sessions
   const deleteSessionsBulk = useCallback(async (sessionIds: string[]): Promise<void> => {

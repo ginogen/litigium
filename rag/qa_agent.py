@@ -30,49 +30,97 @@ llm = ChatOpenAI(
 )
 embedder = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
-def obtener_tipos_demanda_disponibles() -> List[str]:
-    """Obtiene los tipos de demanda disponibles desde las categorías de usuario en Supabase."""
+def obtener_tipos_demanda_por_abogado(user_id: str) -> List[str]:
+    """Obtiene los tipos de demanda disponibles específicos para un abogado."""
     try:
         # Importar aquí para evitar dependencias circulares
         from supabase_integration import supabase_admin
         
-        # Obtener todas las categorías activas que tienen documentos procesados
+        # Buscar el ID del abogado basado en el user_id
+        abogado_result = supabase_admin.table("abogados")\
+            .select("id")\
+            .eq("user_id", user_id)\
+            .execute()
+        
+        if not abogado_result.data or len(abogado_result.data) == 0:
+            print(f"⚠️ No se encontró abogado para user_id: {user_id}")
+            # Fallback con tipos básicos
+            return ["Despido", "Empleados En Blanco", "Empleados En Negro", "Demanda Licencia Medica", "Demanda Solidaridad Laboral"]
+        
+        abogado_id = abogado_result.data[0]["id"]
+        print(f"🔍 Obteniendo tipos para abogado {abogado_id} (user_id: {user_id})")
+        
+        # Obtener categorías específicas del abogado
         response = supabase_admin.table('categorias_demandas')\
-            .select('nombre, id')\
+            .select('nombre, id, descripcion')\
+            .eq('user_id', user_id)\
             .eq('activo', True)\
             .execute()
         
         if not response.data:
-            print("⚠️ No hay categorías en la base de datos")
-            # Fallback con tipos básicos
-            return ["Empleados En Blanco", "Empleados En Negro", "Demanda Licencia Medica", "Demanda Solidaridad Laboral", "Empleados Blanco Negro"]
+            print(f"⚠️ No hay categorías para el abogado {abogado_id}")
+            # Crear categorías por defecto
+            return crear_categorias_por_defecto(user_id)
         
         # Verificar cuáles categorías tienen documentos procesados
         categorias_con_documentos = []
+        categorias_sin_documentos = []
+        
         for categoria in response.data:
             docs_response = supabase_admin.table('documentos_entrenamiento')\
                 .select('id')\
+                .eq('abogado_id', abogado_id)\
                 .eq('categoria_id', categoria['id'])\
                 .eq('estado_procesamiento', 'completado')\
                 .execute()
             
             if docs_response.data and len(docs_response.data) > 0:
                 categorias_con_documentos.append(categoria['nombre'])
+            else:
+                categorias_sin_documentos.append(categoria['nombre'])
         
-        if categorias_con_documentos:
-            print(f"✅ Categorías con documentos encontradas: {categorias_con_documentos}")
-            return categorias_con_documentos
+        # Priorizar categorías con documentos, pero incluir todas
+        tipos_finales = categorias_con_documentos + categorias_sin_documentos
+        
+        if tipos_finales:
+            print(f"✅ Tipos encontrados para abogado {abogado_id}: {tipos_finales}")
+            print(f"   📄 Con documentos: {categorias_con_documentos}")
+            print(f"   📁 Sin documentos: {categorias_sin_documentos}")
+            return tipos_finales
         else:
-            print("⚠️ No hay categorías con documentos procesados")
-            # Devolver nombres de categorías aunque no tengan documentos, para mostrar en la interfaz
-            nombres_categorias = [cat['nombre'] for cat in response.data]
-            return nombres_categorias if nombres_categorias else ["Empleados En Blanco", "Empleados En Negro"]
+            print(f"⚠️ No se encontraron tipos para el abogado {abogado_id}")
+            return crear_categorias_por_defecto(user_id)
             
     except Exception as e:
-        print(f"❌ Error obteniendo categorías desde Supabase: {e}")
+        print(f"❌ Error obteniendo tipos por abogado: {e}")
+        # Fallback con tipos básicos
+        return ["Despido", "Empleados En Blanco", "Empleados En Negro", "Demanda Licencia Medica", "Demanda Solidaridad Laboral"]
+
+def crear_categorias_por_defecto(user_id: str) -> List[str]:
+    """Crea categorías por defecto para un abogado nuevo."""
+    try:
+        from backend.core.category_manager import CategoryManager
         
-        # Último fallback: tipos predefinidos
-        return ["Empleados En Blanco", "Empleados En Negro", "Demanda Licencia Medica", "Demanda Solidaridad Laboral", "Empleados Blanco Negro"]
+        category_manager = CategoryManager()
+        categorias_creadas = category_manager.create_default_categories_for_user(user_id)
+        
+        if categorias_creadas:
+            nombres = [cat['nombre'] for cat in categorias_creadas]
+            print(f"✅ Categorías por defecto creadas: {nombres}")
+            return nombres
+        else:
+            print("⚠️ No se pudieron crear categorías por defecto")
+            return ["Despido", "Empleados En Blanco", "Empleados En Negro"]
+            
+    except Exception as e:
+        print(f"❌ Error creando categorías por defecto: {e}")
+        return ["Despido", "Empleados En Blanco", "Empleados En Negro"]
+
+# Mantener función original para compatibilidad
+def obtener_tipos_demanda_disponibles() -> List[str]:
+    """Obtiene los tipos de demanda disponibles (función legacy para compatibilidad)."""
+    print("⚠️ Usando función legacy - se recomienda usar obtener_tipos_demanda_por_abogado()")
+    return ["Despido", "Empleados En Blanco", "Empleados En Negro", "Demanda Licencia Medica", "Demanda Solidaridad Laboral"]
 
 def mapear_nombre_carpeta(nombre_carpeta: str) -> str:
     """Mapea nombres de carpetas a nombres legibles para el usuario."""
@@ -98,7 +146,7 @@ def mapear_tipo_a_coleccion(tipo_demanda: str) -> str:
     
     return mapeo_inverso.get(tipo_demanda, tipo_demanda.lower().replace(" ", "_"))
 
-def buscar_contexto_legal_enriquecido(user_id: str, query: str, tipo_demanda: str = None, top_k: int = 3) -> str:
+def buscar_contexto_legal_enriquecido(user_id: str, query: str, tipo_demanda: str = None, info_documentos: Dict = None) -> str:
     """Busca contexto legal enriquecido con anotaciones de experto en colección personal."""
     
     try:
@@ -110,7 +158,7 @@ def buscar_contexto_legal_enriquecido(user_id: str, query: str, tipo_demanda: st
             user_id=user_id,
             query_text=query,
             tipo_demanda=tipo_demanda,
-            limit=top_k
+            limit=3
         )
         
         # Construir contexto estructurado para IA
@@ -135,6 +183,27 @@ def buscar_contexto_legal_enriquecido(user_id: str, query: str, tipo_demanda: st
             insights_text = " | ".join(enhanced_context["insights_adicionales"])
             context_parts.append(f"INSIGHTS ADICIONALES: {insights_text}")
         
+        # NUEVO: Enriquecer con información de documentos procesados
+        if info_documentos and info_documentos.get("transcripcion_completa"):
+            context_parts.append(f"DOCUMENTOS PROCESADOS: {info_documentos['transcripcion_completa'][:1000]}")
+            
+            # Agregar información estructurada de documentos
+            if info_documentos.get("personas_identificadas"):
+                personas_text = ", ".join(info_documentos["personas_identificadas"][:5])
+                context_parts.append(f"PERSONAS EN DOCUMENTOS: {personas_text}")
+            
+            if info_documentos.get("empresas_identificadas"):
+                empresas_text = ", ".join(info_documentos["empresas_identificadas"][:3])
+                context_parts.append(f"EMPRESAS EN DOCUMENTOS: {empresas_text}")
+            
+            if info_documentos.get("fechas_importantes"):
+                fechas_text = ", ".join(info_documentos["fechas_importantes"][:5])
+                context_parts.append(f"FECHAS EN DOCUMENTOS: {fechas_text}")
+            
+            if info_documentos.get("montos_encontrados"):
+                montos_text = ", ".join(info_documentos["montos_encontrados"][:3])
+                context_parts.append(f"MONTOS EN DOCUMENTOS: {montos_text}")
+        
         # Añadir información de la fuente
         if enhanced_context.get("documentos_fuente"):
             stats_text = f"[Fuentes: {enhanced_context['documentos_fuente']} docs, {enhanced_context.get('documentos_con_anotaciones', 0)} con anotaciones expertas]"
@@ -151,7 +220,7 @@ def buscar_contexto_legal_enriquecido(user_id: str, query: str, tipo_demanda: st
         print(f"❌ Error en búsqueda enriquecida, usando fallback: {e}")
         # Usar fallback más simple
         try:
-            return buscar_contexto_usuario_basico(user_id, query, tipo_demanda, top_k)
+            return buscar_contexto_usuario_basico(user_id, query, tipo_demanda, 3)
         except Exception as e2:
             print(f"❌ Error en fallback básico: {e2}")
             # Último fallback: contexto predefinido
@@ -324,90 +393,176 @@ def buscar_contexto_legal(tipo: str, query: str, top_k: int = 2) -> str:
     """Busca contexto legal relevante en la base de datos vectorial (función legacy)."""
     return buscar_contexto_legal_basico(tipo, query, top_k)
 
-def generar_demanda(tipo_demanda: str, datos_cliente: Dict, hechos_adicionales: str = "", notas_abogado: str = "", user_id: str = None) -> Dict:
-    """Genera una demanda completa basada en el contexto legal enriquecido con anotaciones."""
-    
-    # Construir query de búsqueda
-    query_busqueda = f"{hechos_adicionales} {datos_cliente.get('motivo_demanda', '')} {notas_abogado}"
-    
-    # NUEVO: Usar contexto enriquecido con anotaciones si se proporciona user_id
-    if user_id:
-        print(f"🔍 Usando contexto enriquecido con anotaciones para user {user_id}")
-        contexto_legal = buscar_contexto_legal_enriquecido(user_id, query_busqueda, tipo_demanda)
-    else:
-        print(f"🔍 Usando contexto básico (sin user_id)")
-        contexto_legal = obtener_contexto_predefinido(tipo_demanda)
-    
-    # Prompt mejorado para generar demanda profesional
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """Eres un abogado especialista en derecho laboral argentino. 
-        Redacta una demanda profesional, completa y técnicamente correcta.
+def obtener_informacion_documentos_sincrona(session_id: str) -> Dict:
+    """Obtiene información consolidada de documentos de forma síncrona."""
+    try:
+        print(f"📄 Obteniendo información consolidada de documentos para session_id: {session_id}")
+        from supabase_integration import supabase_admin
         
-        ESTRUCTURA OBLIGATORIA:
-        1. ENCABEZADO (Tribunal, Expediente, Caratula)
-        2. HECHOS (numerados y claros)
-        3. DERECHO (LCT artículos específicos)
-        4. PETITORIO (solicitudes concretas)
-        5. OFRECIMIENTO DE PRUEBA
-        6. FIRMA DEL LETRADO
+        # Obtener consolidado usando función SQL directamente
+        response = supabase_admin.rpc('get_documentos_chat_consolidado', {
+            'p_session_id': session_id
+        }).execute()
         
-        Usa lenguaje jurídico formal, cita artículos LCT específicos, y estructura según código procesal argentino."""),
-        
-        ("human", """CLIENTE: {datos_cliente}
-TIPO: {tipo_demanda}
-HECHOS: {hechos_adicionales}
-NOTAS: {notas_abogado}
+        if response.data and len(response.data) > 0:
+            consolidado = response.data[0]
+            informacion_documentos = {
+                'transcripcion_completa': consolidado.get('transcripcion_completa', ''),
+                'personas_identificadas': consolidado.get('personas_identificadas', []),
+                'empresas_identificadas': consolidado.get('empresas_identificadas', []),
+                'fechas_importantes': consolidado.get('fechas_importantes', []),
+                'montos_encontrados': consolidado.get('montos_encontrados', []),
+                'datos_contacto': consolidado.get('datos_contacto', {})
+            }
+            print(f"✅ Información de documentos obtenida: {len(informacion_documentos['personas_identificadas'])} personas, {len(informacion_documentos['empresas_identificadas'])} empresas")
+            return informacion_documentos
+        else:
+            print(f"⚠️ No se encontró información consolidada para session_id: {session_id}")
+            return {}
+            
+    except Exception as e:
+        print(f"⚠️ Error obteniendo información de documentos: {e}")
+        # Continuar sin información de documentos
+        return {}
 
-CONTEXTO LEGAL: {contexto_legal}
-
-Redacta una demanda completa siguiendo la estructura obligatoria.""")
-    ])
+async def generar_demanda(tipo_demanda: str, datos_cliente: Dict, hechos_adicionales: str = "", notas_abogado: str = "", user_id: str = None, session_id: str = None) -> Dict:
+    """Genera una demanda legal usando IA con contexto enriquecido."""
     
     try:
-        # Formatear datos del cliente de manera legible
-        datos_formateados = "\n".join([f"• {k.upper()}: {v}" for k, v in datos_cliente.items() if v])
+        print(f"🚀 Iniciando generación de demanda: {tipo_demanda}")
+        print(f"👤 Cliente: {datos_cliente.get('nombre_completo', 'No especificado')}")
         
-        # Generar la demanda con timeout específico
-        messages = prompt.format_messages(
-            datos_cliente=datos_formateados,
+        # NUEVO: Obtener información de documentos procesados
+        info_documentos = {}
+        if session_id:
+            try:
+                info_documentos = obtener_informacion_documentos_sincrona(session_id)
+                print(f"📄 Documentos procesados: {len(info_documentos.get('transcripcion_completa', ''))} caracteres")
+            except Exception as e:
+                print(f"⚠️ Error obteniendo documentos: {e}")
+        
+        # Construir query para búsqueda de contexto
+        query = f"{tipo_demanda} {hechos_adicionales}"
+        
+        # NUEVO: Buscar contexto legal enriquecido con información de documentos
+        contexto_legal = buscar_contexto_legal_enriquecido(
+            user_id=user_id or "default", 
+            query=query, 
             tipo_demanda=tipo_demanda,
-            hechos_adicionales=hechos_adicionales,
-            notas_abogado=notas_abogado,
-            contexto_legal=contexto_legal
+            info_documentos=info_documentos
         )
         
-        # Configurar timeout para la operación de IA
-        start_time = time.time()
-        
-        try:
-            respuesta = llm.invoke(messages)
-            texto_demanda = respuesta.content
-        except Exception as llm_error:
-            elapsed_time = time.time() - start_time
-            if elapsed_time > 60:  # Si tardó más de 1 minuto
-                raise TimeoutError(f"La generación de la demanda tardó demasiado ({elapsed_time:.1f}s)")
-            else:
-                raise llm_error
+        # Construir prompt completo con toda la información
+        prompt = f"""
+Eres un abogado experto en derecho laboral argentino. Genera una demanda profesional basándote en la siguiente información:
+
+TIPO DE DEMANDA: {tipo_demanda}
+
+DATOS DEL CLIENTE:
+- Nombre: {datos_cliente.get('nombre_completo', 'No especificado')}
+- DNI: {datos_cliente.get('dni', 'No especificado')}
+- Domicilio: {datos_cliente.get('domicilio', 'No especificado')}
+- Teléfono: {datos_cliente.get('telefono', 'No especificado')}
+- Email: {datos_cliente.get('email', 'No especificado')}
+- Ocupación: {datos_cliente.get('ocupacion', 'No especificado')}
+
+HECHOS ADICIONALES:
+{hechos_adicionales}
+
+NOTAS DEL ABOGADO:
+{notas_abogado}
+
+CONTEXTO LEGAL Y JURISPRUDENCIA:
+{contexto_legal}
+
+INFORMACIÓN DE DOCUMENTOS PROCESADOS:
+{info_documentos.get('transcripcion_completa', 'No hay documentos procesados')}
+
+INSTRUCCIONES:
+1. Genera una demanda completa y profesional
+2. Incluye todos los elementos legales necesarios
+3. Usa la información de documentos procesados cuando sea relevante
+4. Cita artículos específicos de la LCT y jurisprudencia
+5. Estructura la demanda correctamente (hechos, derecho, petitorio, prueba)
+6. Adapta el contenido al tipo de demanda específico
+
+Genera la demanda completa:
+"""
+
+        # Generar la demanda con IA
+        response = llm.invoke(prompt)
+        texto_demanda = response.content
         
         # Crear documento Word
         archivo_docx = crear_documento_word(texto_demanda, datos_cliente, tipo_demanda)
         
+        # Metadatos enriquecidos
+        metadatos = {
+            "tipo_demanda": tipo_demanda,
+            "datos_cliente": datos_cliente,
+            "hechos_adicionales": hechos_adicionales,
+            "notas_abogado": notas_abogado,
+            "documentos_procesados": len(info_documentos.get('transcripcion_completa', '')),
+            "personas_identificadas": info_documentos.get('personas_identificadas', []),
+            "empresas_identificadas": info_documentos.get('empresas_identificadas', []),
+            "fechas_importantes": info_documentos.get('fechas_importantes', []),
+            "montos_encontrados": info_documentos.get('montos_encontrados', []),
+            "contexto_legal_usado": len(contexto_legal),
+            "fecha_generacion": datetime.now().isoformat()
+        }
+        
+        print(f"✅ Demanda generada exitosamente")
+        print(f"📄 Archivo creado: {archivo_docx}")
+        print(f"📊 Metadatos: {len(metadatos)} campos")
+        
         return {
             "texto_demanda": texto_demanda,
             "archivo_docx": archivo_docx,
-            "metadatos": {
-                "tipo_demanda": tipo_demanda,
-                "fecha_generacion": datetime.now().isoformat(),
-                "cliente": datos_cliente.get("nombre_completo", "No especificado"),
-                "casos_consultados": len(contexto_legal.split("--- CASO PRECEDENTE ---")) - 1,
-                "tiempo_generacion": time.time() - start_time
-            }
+            "metadatos": metadatos,
+            "exito": True
         }
         
-    except TimeoutError as e:
-        raise Exception(f"Timeout en generación: {str(e)}")
     except Exception as e:
-        raise Exception(f"Error generando demanda: {str(e)}")
+        print(f"❌ Error generando demanda: {e}")
+        return {
+            "texto_demanda": f"Error generando demanda: {str(e)}",
+            "archivo_docx": None,
+            "metadatos": {"error": str(e)},
+            "exito": False
+        }
+
+def generar_demanda_sincrona(tipo_demanda: str, datos_cliente: Dict, hechos_adicionales: str = "", notas_abogado: str = "", user_id: str = None, session_id: str = None) -> Dict:
+    """Versión síncrona de generar_demanda para compatibilidad con código existente."""
+    import asyncio
+    
+    try:
+        # Verificar si ya hay un event loop corriendo
+        try:
+            loop = asyncio.get_running_loop()
+            # Si hay un loop corriendo, crear uno nuevo
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, generar_demanda(
+                    tipo_demanda=tipo_demanda,
+                    datos_cliente=datos_cliente,
+                    hechos_adicionales=hechos_adicionales,
+                    notas_abogado=notas_abogado,
+                    user_id=user_id,
+                    session_id=session_id
+                ))
+                return future.result()
+        except RuntimeError:
+            # No hay loop corriendo, usar asyncio.run
+            return asyncio.run(generar_demanda(
+                tipo_demanda=tipo_demanda,
+                datos_cliente=datos_cliente,
+                hechos_adicionales=hechos_adicionales,
+                notas_abogado=notas_abogado,
+                user_id=user_id,
+                session_id=session_id
+            ))
+    except Exception as e:
+        raise Exception(f"Error en generación síncrona: {str(e)}")
 
 def crear_documento_word(texto_demanda: str, datos_cliente: Dict, tipo_demanda: str) -> str:
     """Crea un documento Word con la demanda generada - tipografía completamente en negro."""

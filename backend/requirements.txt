@@ -1,30 +1,31 @@
-# Dependencias para compatibilidad con Python 3.12+
-setuptools>=68.0.0
-wheel>=0.41.0
-
+# Dependencias esenciales para Railway
 fastapi==0.104.1
-uvicorn==0.24.0
+uvicorn[standard]==0.24.0
 python-multipart==0.0.6
+pydantic>=2.5.0,<3.0.0
 python-dotenv==1.0.0
-pydantic==2.5.0
-aiofiles==23.2.1
-mangum==0.17.0
-requests==2.31.0
 
-# Supabase y dependencias compatibles (versiones sincronizadas)
+# Supabase (versiones recientes y compatibles)
 supabase>=2.9.0,<3.0.0
+gotrue>=2.9.0,<3.0.0
 httpx>=0.25.0,<1.0.0
-postgrest>=0.13.0,<1.0.0
 
-openai==1.51.0
+# IA y embeddings (CRÍTICAS para el funcionamiento)
+openai>=1.6.1
+qdrant-client>=1.7.0
+langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-openai>=0.0.5
 
-# Procesamiento de documentos
-PyPDF2==3.0.1
-python-docx==1.1.0
-Pillow==10.1.0
 
-# Base de datos vectorial
-qdrant-client==1.6.9
+# Procesamiento básico de documentos
+python-docx>=1.0.0
+PyPDF2>=3.0.0
+requests>=2.31.0
+
+# Utilidades básicas
+tqdm>=4.0.0
+aiofiles>=23.0.0
 
 # Dependencias base para encriptación
 cffi>=1.15.0
@@ -33,19 +34,11 @@ pycparser>=2.21
 # Encriptación para tokens de Google Drive
 cryptography==45.0.4
 
-# Google Auth dependencies
-cachetools>=4.2.0,<6.0.0
-pyasn1>=0.4.6
-pyasn1-modules>=0.2.1
-rsa>=3.1.4,<5.0.0
-six>=1.9.0
 
-# Google Drive API
+# Google Drive API y dependencias (versiones unificadas)
 google-auth==2.25.2
 google-auth-oauthlib==1.1.0
 google-api-python-client==2.110.0
-
-# Dependencias adicionales para Google API
 cachetools==5.3.2
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
@@ -54,3 +47,6 @@ six==1.16.0
 googleapis-common-protos==1.62.0
 protobuf==4.25.1
 urllib3==2.1.0
+
+# Audio básico
+pydub==0.25.1

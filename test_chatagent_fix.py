@@ -1,149 +1,92 @@
 #!/usr/bin/env python3
 """
-Script para probar el ChatAgent después de las correcciones del error NoneType.
+Script de prueba para verificar que el ChatAgent funciona correctamente
+con las mejoras implementadas para hacerlo más fluido y conversacional.
 """
 
+import asyncio
 import sys
 import os
-import traceback
-from dotenv import load_dotenv
-
-# Cargar variables de entorno
-load_dotenv()
 
 # Agregar el directorio raíz al path
-sys.path.append('.')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-def test_openai_key():
-    """Verifica que la clave de OpenAI esté configurada."""
-    print("🔑 Verificando clave de OpenAI...")
-    
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("❌ OPENAI_API_KEY no está configurada")
-        return False
-    
-    if len(api_key) < 20:
-        print("❌ OPENAI_API_KEY parece estar mal configurada (muy corta)")
-        return False
-    
-    print(f"✅ OPENAI_API_KEY configurada correctamente (longitud: {len(api_key)})")
-    return True
+from rag.chat_agent import ChatAgentInteligente
 
-def test_chatagent_initialization():
-    """Verifica que el ChatAgent se pueda inicializar."""
-    print("\n🤖 Probando inicialización del ChatAgent...")
+async def test_chat_agent():
+    """Prueba el ChatAgent con diferentes tipos de mensajes."""
     
-    try:
-        from rag.chat_agent import ChatAgentInteligente
-        
-        agent = ChatAgentInteligente()
-        print("✅ ChatAgent inicializado exitosamente")
-        print(f"📋 Tipos disponibles: {len(agent.tipos_disponibles)}")
-        
-        return agent
-    except Exception as e:
-        print(f"❌ Error inicializando ChatAgent: {e}")
-        traceback.print_exc()
-        return None
-
-def test_basic_message_processing(agent):
-    """Prueba el procesamiento básico de mensajes."""
-    print("\n💬 Probando procesamiento de mensajes...")
-    
-    try:
-        # Crear sesión de prueba
-        session = {
-            'datos_cliente': {},
-            'tipo_demanda': '',
-            'hechos_adicionales': '',
-            'notas_abogado': '',
-            'estado': 'inicio'
-        }
-        
-        # Mensaje de prueba simple
-        mensaje = "Hola, necesito ayuda con una demanda laboral"
-        session_id = "test-123"
-        
-        print(f"📝 Enviando mensaje: {mensaje}")
-        resultado = agent.procesar_mensaje(session, mensaje, session_id)
-        
-        if resultado and isinstance(resultado, dict):
-            print("✅ Mensaje procesado exitosamente")
-            print(f"📤 Respuesta: {resultado.get('mensaje', 'Sin mensaje')[:100]}...")
-            return True
-        else:
-            print("❌ El resultado no es válido")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error procesando mensaje: {e}")
-        traceback.print_exc()
-        return False
-
-def test_data_extraction(agent):
-    """Prueba la extracción de datos específicos."""
-    print("\n🔍 Probando extracción de datos...")
-    
-    try:
-        # Crear sesión con tipo ya seleccionado
-        session = {
-            'datos_cliente': {},
-            'tipo_demanda': 'Empleados En Blanco',
-            'hechos_adicionales': '',
-            'notas_abogado': '',
-            'estado': 'conversando'
-        }
-        
-        # Mensaje con datos específicos
-        mensaje = "Gino Gentile, Paraguay 2536, 35703591, me despidieron sin causa de la empresa GEDCO"
-        session_id = "test-456"
-        
-        print(f"📝 Enviando datos: {mensaje}")
-        resultado = agent.procesar_mensaje(session, mensaje, session_id)
-        
-        if resultado and isinstance(resultado, dict):
-            print("✅ Datos procesados exitosamente")
-            print(f"📋 Datos extraídos en sesión: {session.get('datos_cliente', {})}")
-            print(f"📝 Hechos: {session.get('hechos_adicionales', 'N/A')[:50]}...")
-            return True
-        else:
-            print("❌ Error en extracción de datos")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error extrayendo datos: {e}")
-        traceback.print_exc()
-        return False
-
-def main():
-    """Función principal de pruebas."""
-    print("🧪 PRUEBAS DEL CHATAGENT CORREGIDO")
+    print("🧪 INICIANDO PRUEBAS DEL CHATAGENT FLUIDO")
     print("=" * 50)
     
-    # Test 1: Verificar clave de OpenAI
-    if not test_openai_key():
-        print("\n❌ Las pruebas no pueden continuar sin la clave de OpenAI")
-        return
+    # Crear instancia del ChatAgent
+    chat_agent = ChatAgentInteligente()
     
-    # Test 2: Inicializar ChatAgent
-    agent = test_chatagent_initialization()
-    if not agent:
-        print("\n❌ Las pruebas no pueden continuar sin ChatAgent")
-        return
+    # Simular una sesión
+    session = {
+        "datos_cliente": {},
+        "tipo_demanda": "",
+        "hechos_adicionales": "",
+        "notas_abogado": "",
+        "estado": "conversando",
+        "user_id": "test_user"
+    }
     
-    # Test 3: Procesamiento básico
-    if not test_basic_message_processing(agent):
-        print("\n❌ Error en procesamiento básico")
-        return
+    session_id = "test_session_123"
     
-    # Test 4: Extracción de datos
-    if not test_data_extraction(agent):
-        print("\n❌ Error en extracción de datos")
-        return
+    # Prueba 1: Primer mensaje
+    print("\n🔍 PRUEBA 1: Primer mensaje")
+    print("Mensaje: 'Quiero ayuda con Despido...'")
     
-    print("\n✅ TODAS LAS PRUEBAS PASARON EXITOSAMENTE")
-    print("🎉 El ChatAgent está funcionando correctamente")
+    try:
+        respuesta = await chat_agent.procesar_mensaje(session, "Quiero ayuda con Despido...", session_id)
+        print(f"✅ Respuesta recibida: {respuesta.get('mensaje', 'Sin mensaje')[:100]}...")
+        print(f"📊 Estado: {session.get('estado')}")
+        print(f"👤 Datos cliente: {session.get('datos_cliente')}")
+    except Exception as e:
+        print(f"❌ Error en prueba 1: {e}")
+    
+    # Prueba 2: Agregar datos del cliente
+    print("\n🔍 PRUEBA 2: Agregar datos del cliente")
+    print("Mensaje: 'El cliente se llama Juan Pérez, DNI 12345678'")
+    
+    try:
+        respuesta = await chat_agent.procesar_mensaje(session, "El cliente se llama Juan Pérez, DNI 12345678", session_id)
+        print(f"✅ Respuesta recibida: {respuesta.get('mensaje', 'Sin mensaje')[:100]}...")
+        print(f"📊 Estado: {session.get('estado')}")
+        print(f"👤 Datos cliente: {session.get('datos_cliente')}")
+    except Exception as e:
+        print(f"❌ Error en prueba 2: {e}")
+    
+    # Prueba 3: Agregar hechos
+    print("\n🔍 PRUEBA 3: Agregar hechos")
+    print("Mensaje: 'Fue despedido sin causa el 15 de marzo, trabajaba en la empresa ABC'")
+    
+    try:
+        respuesta = await chat_agent.procesar_mensaje(session, "Fue despedido sin causa el 15 de marzo, trabajaba en la empresa ABC", session_id)
+        print(f"✅ Respuesta recibida: {respuesta.get('mensaje', 'Sin mensaje')[:100]}...")
+        print(f"📊 Estado: {session.get('estado')}")
+        print(f"📝 Hechos: {session.get('hechos_adicionales', '')[:100]}...")
+    except Exception as e:
+        print(f"❌ Error en prueba 3: {e}")
+    
+    # Prueba 4: Mensaje con mucha información
+    print("\n🔍 PRUEBA 4: Mensaje con mucha información")
+    print("Mensaje: 'María González, DNI 87654321, vive en Paraguay 1234, teléfono 11-1234-5678, fue empleada doméstica en negro durante 2 años'")
+    
+    try:
+        respuesta = await chat_agent.procesar_mensaje(session, "María González, DNI 87654321, vive en Paraguay 1234, teléfono 11-1234-5678, fue empleada doméstica en negro durante 2 años", session_id)
+        print(f"✅ Respuesta recibida: {respuesta.get('mensaje', 'Sin mensaje')[:100]}...")
+        print(f"📊 Estado: {session.get('estado')}")
+        print(f"👤 Datos cliente: {session.get('datos_cliente')}")
+    except Exception as e:
+        print(f"❌ Error en prueba 4: {e}")
+    
+    print("\n" + "=" * 50)
+    print("🏁 PRUEBAS COMPLETADAS")
+    print(f"📊 Estado final: {session.get('estado')}")
+    print(f"👤 Datos finales: {session.get('datos_cliente')}")
+    print(f"📝 Hechos finales: {session.get('hechos_adicionales', '')[:100]}...")
 
 if __name__ == "__main__":
-    main() 
+    asyncio.run(test_chat_agent()) 

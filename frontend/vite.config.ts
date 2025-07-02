@@ -12,7 +12,7 @@ export default defineConfig({
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   server: {
-    port: 3000,
+    port: 5173,
     host: '0.0.0.0', // Para Railway
     proxy: {
       '/api': {
@@ -24,7 +24,7 @@ export default defineConfig({
     }
   },
   preview: {
-    port: parseInt(process.env.PORT || '3000'),
+    port: parseInt(process.env.PORT || '5173'),
     host: '0.0.0.0', // Para Railway
     allowedHosts: ['all'], // Permitir todos los hosts para Railway
   },

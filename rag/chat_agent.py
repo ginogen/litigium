@@ -11,7 +11,7 @@ from datetime import datetime
 load_dotenv()
 
 class ChatAgentInteligente:
-    def __init__(self):
+    def __init__(self, user_id: str = None):
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY no está configurada en las variables de entorno")
@@ -20,25 +20,31 @@ class ChatAgentInteligente:
             api_key=api_key,
             timeout=60.0  # Timeout de 60 segundos para OpenAI
         )
+        self.user_id = user_id
+        # Inicializar tipos dinámicos si tenemos user_id
+        if user_id:
+            try:
+                from rag.qa_agent import obtener_tipos_demanda_por_abogado
+                self.tipos_disponibles = obtener_tipos_demanda_por_abogado(user_id)
+                print(f"✅ ChatAgentInteligente inicializado con {len(self.tipos_disponibles)} tipos dinámicos para user_id: {user_id}")
+            except Exception as e:
+                print(f"⚠️ Error obteniendo tipos dinámicos: {e}")
+                self.tipos_disponibles = self._tipos_fallback()
+        else:
+            # Fallback con tipos básicos si no hay user_id
+            self.tipos_disponibles = self._tipos_fallback()
+            print(f"✅ ChatAgentInteligente inicializado con {len(self.tipos_disponibles)} tipos básicos (sin user_id)")
         
-        # Inicializar tipos con fallback
-        try:
-            self.tipos_disponibles = obtener_tipos_demanda_disponibles()
-            if not self.tipos_disponibles:
-                raise ValueError("obtener_tipos_demanda_disponibles devolvió lista vacía")
-            print(f"✅ ChatAgentInteligente inicializado con {len(self.tipos_disponibles)} tipos de demanda")
-        except Exception as e:
-            print(f"⚠️ Error obteniendo tipos de demanda: {e}")
-            # Fallback con tipos básicos
-            self.tipos_disponibles = [
-                "Empleados En Blanco", 
-                "Empleados En Negro", 
-                "Demanda Licencia Medica", 
-                "Demanda Solidaridad Laboral",
-                "Empleados Blanco Negro"
-            ]
-            print(f"✅ ChatAgentInteligente inicializado con {len(self.tipos_disponibles)} tipos de demanda (fallback)")
-        
+    def _tipos_fallback(self) -> list:
+        return [
+            "Despido",
+            "Empleados En Blanco", 
+            "Empleados En Negro", 
+            "Demanda Licencia Medica", 
+            "Demanda Solidaridad Laboral",
+            "Empleados Blanco Negro"
+        ]
+    
     def _extraer_datos_fallback(self, mensaje: str, session: Dict) -> Dict:
         """Método de fallback usando regex para extraer datos básicos cuando OpenAI falla."""
         print("🔧 Usando extracción de fallback con regex...")
@@ -103,7 +109,7 @@ class ChatAgentInteligente:
             "listo_para_generar": bool(datos_extraidos.get("nombre_completo") and datos_extraidos.get("dni") and tipo_detectado and hechos_extraidos)
         }
         
-    def procesar_mensaje(self, session: Dict, mensaje_usuario: str, session_id: str) -> Dict:
+    async def procesar_mensaje(self, session: Dict, mensaje_usuario: str, session_id: str) -> Dict:
         """Procesa un mensaje usando IA para entender la intención y extraer información."""
         
         print(f"🚨 INICIO procesar_mensaje")
@@ -135,6 +141,51 @@ class ChatAgentInteligente:
                 session['datos_cliente'] = {}
             print(f"✅ datos_cliente inicializado")
             
+            # VERIFICAR SI ES EL PRIMER MENSAJE (estado = "inicio")
+            # Si es el primer mensaje, mostrar siempre el mensaje inicial
+            estado_actual = session.get("estado", "inicio")
+            if estado_actual == "inicio":
+                print(f"🎯 Primer mensaje detectado - mostrando mensaje inicial")
+                
+                # IMPORTANTE: Actualizar el estado antes de retornar
+                session["estado"] = "conversando"
+                print(f"🔄 Estado actualizado: 'inicio' → 'conversando'")
+                
+                # Obtener categorías disponibles para mostrar como opciones
+                opciones_categorias = []
+                if hasattr(self, 'tipos_disponibles') and self.tipos_disponibles:
+                    opciones_categorias = [f"Quiero ayuda con {tipo}" for tipo in self.tipos_disponibles]
+                
+                return {
+                    "session_id": session_id,
+                    "mensaje": self._generar_mensaje_inicial(),
+                    "tipo": "bot",
+                    "timestamp": datetime.now().isoformat(),
+                    "demanda_generada": False,
+                    "mostrar_confirmacion": False,
+                    "es_mensaje_inicial": True,
+                    "opciones": opciones_categorias
+                }
+            
+            # DETECCIÓN AUTOMÁTICA DE INFORMACIÓN DE DOCUMENTOS
+            print(f"🔍 Detectando información automática de documentos...")
+            cambios_automaticos = self._detectar_informacion_automatica(session, session_id)
+            if cambios_automaticos:
+                print(f"🤖 Cambios automáticos realizados: {cambios_automaticos}")
+                
+                # Si se detectó información automáticamente, mostrar inmediatamente
+                mensaje_informacion = self._generar_mensaje_informacion_extraida(cambios_automaticos, session, session_id)
+                if mensaje_informacion:
+                    return {
+                        "session_id": session_id,
+                        "mensaje": mensaje_informacion,
+                        "tipo": "bot",
+                        "timestamp": datetime.now().isoformat(),
+                        "demanda_generada": False,
+                        "mostrar_confirmacion": True,
+                        "informacion_extraida": True
+                    }
+            
             # Obtener contexto de la conversación
             print(f"🔍 Obteniendo contexto de conversación...")
             contexto = self._obtener_contexto_conversacion(session)
@@ -142,37 +193,35 @@ class ChatAgentInteligente:
             
             # Usar OpenAI para procesar el mensaje
             print(f"🔍 Llamando _procesar_con_openai...")
-            print(f"   tipos_disponibles: {self.tipos_disponibles}")
-            print(f"   tipos_disponibles tipo: {type(self.tipos_disponibles)}")
-            respuesta_ia = self._procesar_con_openai(
-                mensaje_usuario=mensaje_usuario,
-                contexto=contexto,
-                tipos_disponibles=self.tipos_disponibles,
-                session=session
-            )
+            # Usar tipos dinámicos del abogado o fallback
+            tipos_disponibles = self.tipos_disponibles if hasattr(self, 'tipos_disponibles') else self._tipos_fallback()
+            print(f"🔍 Tipos disponibles: {tipos_disponibles}")
             
-            print(f"🔍 _procesar_con_openai devolvió: {type(respuesta_ia)}")
-            if respuesta_ia:
-                print(f"   Keys: {list(respuesta_ia.keys())}")
-            else:
-                print(f"   Valor: {respuesta_ia}")
+            respuesta_ia = self._procesar_con_openai(mensaje_usuario, contexto, tipos_disponibles, session)
+            print(f"✅ Respuesta IA obtenida")
             
-            # Validar respuesta de IA
-            if not respuesta_ia:
-                raise ValueError("La IA no devolvió una respuesta válida")
-            
-            # Actualizar la sesión con la información extraída
-            print(f"🔍 Llamando _actualizar_sesion...")
+            # Actualizar sesión con la información extraída
+            print(f"🔍 Actualizando sesión...")
             self._actualizar_sesion(session, respuesta_ia)
-            print(f"✅ _actualizar_sesion completado")
+            print(f"✅ Sesión actualizada")
             
-            # Generar respuesta apropiada
-            print(f"🔍 Llamando _generar_respuesta...")
-            resultado_final = self._generar_respuesta(session, respuesta_ia, session_id)
-            print(f"🔍 _generar_respuesta devolvió: {type(resultado_final)}")
-            if resultado_final:
-                print(f"   Keys: {list(resultado_final.keys())}")
-            return resultado_final
+            # Generar respuesta final usando la nueva lógica inteligente
+            print(f"🔍 Generando respuesta inteligente...")
+            mensaje_respuesta = self._generar_respuesta_inteligente(session, session_id, mensaje_usuario, respuesta_ia)
+            print(f"✅ Respuesta inteligente generada")
+            
+            # Evaluar si está listo para generar demanda
+            evaluacion = self._evaluar_informacion_completa(session, session_id)
+            
+            return {
+                "session_id": session_id,
+                "mensaje": mensaje_respuesta,
+                "tipo": "bot",
+                "timestamp": datetime.now().isoformat(),
+                "demanda_generada": False,
+                "mostrar_confirmacion": evaluacion["completo"],
+                "progreso_completitud": evaluacion["porcentaje_completo"]
+            }
             
         except Exception as e:
             print(f"❌ Error en procesar_mensaje: {e}")
@@ -218,7 +267,7 @@ class ChatAgentInteligente:
         return contexto
     
     def _procesar_con_openai(self, mensaje_usuario: str, contexto: str, tipos_disponibles: List[str], session: Dict = None) -> Dict:
-        """Usa OpenAI para procesar el mensaje y determinar la acción apropiada."""
+        """Usa OpenAI para procesar el mensaje de forma más fluida y natural."""
         
         # Protección contra tipos_disponibles None
         if not tipos_disponibles:
@@ -232,12 +281,33 @@ class ChatAgentInteligente:
             ]
         
         prompt = f"""
-Eres un asistente legal AI experto que DEBE extraer TODA la información disponible del mensaje del usuario.
+Eres un asistente legal AI experto y conversacional. Tu objetivo es ayudar al ABOGADO a recopilar información sobre su CLIENTE para generar una demanda de forma NATURAL y FLUIDA.
+
+IMPORTANTE: 
+- El USUARIO que te escribe es el ABOGADO
+- La información que extraes es sobre el CLIENTE del abogado
+- NUNCA hables al abogado como si fuera el cliente
+- Siempre dirígete al abogado profesionalmente
 
 CONTEXTO ACTUAL: {contexto}
-MENSAJE DEL USUARIO: "{mensaje_usuario}"
+MENSAJE DEL ABOGADO: "{mensaje_usuario}"
 
 TIPOS DISPONIBLES: {tipos_disponibles}
+
+INSTRUCCIONES PRINCIPALES:
+1. **Sé conversacional y profesional** - Habla al abogado, no al cliente
+2. **Extrae información del CLIENTE** que el abogado proporciona
+3. **Consolida información** - Evalúa todo lo disponible de una vez
+4. **Prioriza eficiencia** - No pidas datos uno por uno si hay información suficiente
+5. **Aprovecha documentos** - Si hay archivos procesados, úsalos inteligentemente
+6. **Sé directo** - Evita confirmaciones excesivas o repetitivas
+
+REGLAS DE EXTRACCIÓN:
+- NOMBRES: 2-3 palabras que empiecen con mayúscula (ej: "Gino Gentile")
+- DNI: números de 7-8 dígitos sin prefijos (ej: "35703591")
+- DIRECCIONES: nombres de calles + números (ej: "Paraguay 2536")
+- TELÉFONOS: números con códigos de área o más de 8 dígitos
+- HECHOS: cualquier información sobre el caso laboral
 
 MAPEO DE TIPOS (EXACTO):
 - "empleados en blanco", "blanco", "trabajo en blanco" → "Empleados En Blanco"
@@ -246,45 +316,46 @@ MAPEO DE TIPOS (EXACTO):
 - "solidaridad" → "Demanda Solidaridad Laboral"
 - "blanco negro", "blanco y negro" → "Empleados Blanco Negro"
 
-INSTRUCCIONES CRÍTICAS:
-1. EXTRAE TODOS los datos personales que encuentres (nombres, direcciones, DNI, etc.)
-2. Si detectas formato "Nombre + Dirección + DNI", sepáralos correctamente
-3. Cualquier mención de despido, problema laboral = agregar a hechos
-4. Si hay tipo + datos básicos + hechos → GENERAR INMEDIATAMENTE
-5. Mapea tipos al nombre EXACTO de la lista disponible
+ESTRATEGIAS DE CONVERSACIÓN:
+- Si es el primer mensaje: Saluda y pregunta qué tipo de demanda necesita
+- Si menciona un tipo: Confirma y pide datos del cliente de forma natural
+- Si da datos parciales: Agradece y pide lo que falta de forma conversacional
+- Si da mucha información: Resume lo que entendiste y pregunta si está completo
+- Si parece completo: Ofrece generar la demanda o preguntar si falta algo
+- Si hay información de imágenes: Úsala automáticamente sin pedir confirmación
 
-REGLAS DE IDENTIFICACIÓN DE DATOS:
-- NOMBRES: 2-3 palabras que empiecen con mayúscula (ej: "Gino Gentile")
-- DNI: números de 7-8 dígitos sin prefijos internacionales (ej: "35703591" = DNI, NO teléfono)
-- DIRECCIONES: nombres de calles + números (ej: "Paraguay 2536")
-- TELÉFONOS: números con códigos de área o más de 8 dígitos (ej: "011-1234-5678")
+EJEMPLOS DE RESPUESTAS PROFESIONALES (ABOGADO):
+- "¡Hola doctor! Veo que necesita ayuda con un caso de despido. ¿Podría contarme sobre la situación de su cliente?"
+- "Perfecto, entiendo que es un caso de empleado en negro. ¿Tiene los datos del cliente disponibles?"
+- "Excelente, ya tengo el nombre y DNI del cliente. ¿En qué empresa trabajaba y cuándo fue el despido?"
+- "Veo que tiene toda la información necesaria. ¿Le parece que proceda a generar la demanda o desea agregar algo más?"
 
-EJEMPLOS DE EXTRACCIÓN CORRECTA:
-- "Juan Pérez, Rivadavia 123, 12345678" → nombre_completo: "Juan Pérez", domicilio: "Rivadavia 123", dni: "12345678"
-- "Gino Gentile, Paraguay 2536, 35703591" → nombre_completo: "Gino Gentile", domicilio: "Paraguay 2536", dni: "35703591"
-- "me despidieron" → hechos: descripción del despido
-- "empresa XYZ" → agregar a hechos con contexto
+IMPORTANTE - MENSAJE_RESPUESTA:
+El campo "mensaje_respuesta" DEBE contener una respuesta conversacional natural y útil para el usuario. NUNCA debe ser null, vacío o "N/A". Siempre debe ser una respuesta que ayude al usuario a continuar la conversación.
 
 RESPONDE EN JSON:
 {{
-    "accion": "seleccionar_tipo|generar_demanda|solicitar_info_critica|continuar_conversacion",
+    "accion": "saludar|extraer_info|confirmar_datos|sugerir_generar|generar_demanda",
     "tipo_demanda_detectado": "EXACTO_DE_LISTA_O_NULL",
     "datos_extraidos": {{
-        "nombre_completo": "NOMBRE_COMPLETO_O_NULL",
-        "dni": "SOLO_NUMEROS_7_8_DIGITOS_O_NULL", 
-        "domicilio": "DIRECCION_COMPLETA_O_NULL",
-        "telefono": "TELEFONO_CON_CODIGO_AREA_O_NULL",
+        "nombre_completo": "NOMBRE_O_NULL",
+        "dni": "DNI_O_NULL", 
+        "domicilio": "DIRECCION_O_NULL",
+        "telefono": "TELEFONO_O_NULL",
         "email": "EMAIL_O_NULL",
         "ocupacion": "TRABAJO_O_NULL"
     }},
-    "hechos_extraidos": "TODOS_LOS_HECHOS_LABORALES_DETECTADOS",
-    "notas_extraidas": "NOTAS_ADICIONALES_O_NULL",
-    "mensaje_respuesta": "RESPUESTA_PROFESIONAL",
-    "listo_para_generar": true_si_tienes_nombre_dni_tipo_hechos
+    "hechos_extraidos": "HECHOS_DETECTADOS_O_NULL",
+    "notas_extraidas": "NOTAS_O_NULL",
+    "mensaje_respuesta": "RESPUESTA_CONVERSACIONAL_NATURAL_Y_UTIL",
+    "listo_para_generar": false
 }}
 
-REGLA ESPECIAL: Si encuentras nombre + DNI + dirección + tipo + situación laboral → listo_para_generar: true
-IMPORTANTE: Números de 7-8 dígitos SON DNI, no teléfonos.
+IMPORTANTE: 
+- Números de 7-8 dígitos SON DNI, no teléfonos.
+- El mensaje_respuesta DEBE ser una respuesta útil y conversacional.
+- NUNCA devuelvas mensaje_respuesta como null, vacío o "N/A".
+- NO incluyas sugerencias ni datos_faltantes en el JSON - solo el mensaje conversacional.
 """
 
         try:
@@ -293,7 +364,7 @@ IMPORTANTE: Números de 7-8 dígitos SON DNI, no teléfonos.
             response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "Eres un experto en extracción de datos legales. SIEMPRE responde en formato JSON válido, siendo MUY inteligente extrayendo información."},
+                    {"role": "system", "content": "Eres un experto en extracción de datos legales. SIEMPRE responde en formato JSON válido, siendo MUY inteligente extrayendo información y manteniendo un tono conversacional natural."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,  # Más determinista
@@ -396,6 +467,11 @@ IMPORTANTE: Números de 7-8 dígitos SON DNI, no teléfonos.
         
         print(f"🔍 Estado actual - Nombre: {tiene_nombre}, DNI: {tiene_dni}, Domicilio: {tiene_domicilio}, Tipo: {tiene_tipo}, Hechos: {tiene_hechos}")
         
+        # Si estamos en estado "inicio", cambiar a "conversando" después del primer mensaje
+        if session.get("estado") == "inicio":
+            session["estado"] = "conversando"
+            print("🔄 Cambiando de 'inicio' a 'conversando'")
+        
         # Lógica de estado más inteligente
         if respuesta_ia.get("listo_para_generar"):
             session["estado"] = "listo_generar"
@@ -415,239 +491,527 @@ IMPORTANTE: Números de 7-8 dígitos SON DNI, no teléfonos.
         elif tiene_tipo and (tiene_nombre or tiene_dni):
             session["estado"] = "necesita_datos_cliente"
             print("⚠️ Necesita completar datos del cliente")
+        elif tiene_tipo:
+            # Si solo tenemos el tipo de demanda, necesitamos datos del cliente
+            session["estado"] = "necesita_datos_cliente"
+            print("✅ Tipo de demanda seleccionado, necesitamos datos del cliente")
         else:
             session["estado"] = "seleccionando_tipo"
             print("⚠️ Necesita seleccionar tipo de demanda")
         
         print(f"🎛️ Estado final: {session['estado']}")
     
-    def _generar_respuesta(self, session: Dict, respuesta_ia: Dict, session_id: str) -> Dict:
-        """Genera la respuesta final para el abogado."""
+    def _evaluar_informacion_completa(self, session: Dict, session_id: str) -> Dict:
+        """Evalúa toda la información disponible de forma integral."""
         
-        # Verificar si debe generar la demanda automáticamente
-        estado = session.get("estado", "")
-        debe_generar = (
-            respuesta_ia.get("listo_para_generar") or 
-            respuesta_ia.get("accion") == "generar_demanda" or
-            estado == "listo_generar"
-        )
+        # Obtener información de documentos procesados
+        info_documentos = {}
+        try:
+            from rag.qa_agent import obtener_informacion_documentos_sincrona
+            info_documentos = obtener_informacion_documentos_sincrona(session_id)
+        except Exception as e:
+            print(f"⚠️ Error obteniendo documentos: {e}")
         
-        if debe_generar:
-            try:
-                # Verificar que tenemos la información mínima
-                datos_cliente = session.get("datos_cliente", {})
-                if not (datos_cliente.get("nombre_completo") and datos_cliente.get("dni")):
-                    raise ValueError("Faltan datos básicos del cliente (nombre y DNI)")
-                
-                # Mostrar progreso al usuario
-                print(f"🔄 Iniciando generación de demanda para {datos_cliente.get('nombre_completo')}")
-                
-                # Generar la demanda con timeout mejorado y contexto enriquecido
-                start_time = time.time()
-                
-                # NUEVO: Obtener user_id del contexto de sesión si está disponible
-                user_id = session.get("user_id")  # El user_id debe pasarse desde el endpoint
-                
-                resultado = generar_demanda(
-                    tipo_demanda=session["tipo_demanda"],
-                    datos_cliente=datos_cliente,
-                    hechos_adicionales=session.get("hechos_adicionales", "") or "",
-                    notas_abogado=session.get("notas_abogado", "") or "",
-                    user_id=user_id  # NUEVO: Pasar user_id para contexto enriquecido
-                )
-                elapsed_time = time.time() - start_time
-                
-                # NUEVO: Guardar la demanda en la base de datos
-                try:
-                    from supabase_integration import supabase_admin
-                    
-                    # Obtener abogado_id desde user_id
-                    abogado_id = None
-                    if user_id:
-                        try:
-                            abogado_response = supabase_admin.table('abogados')\
-                                .select('id')\
-                                .eq('user_id', user_id)\
-                                .single()\
-                                .execute()
-                            
-                            if abogado_response.data:
-                                abogado_id = abogado_response.data['id']
-                                print(f"✅ abogado_id obtenido: {abogado_id}")
-                            else:
-                                print(f"⚠️ No se encontró abogado para user_id: {user_id}")
-                        except Exception as e:
-                            print(f"⚠️ Error obteniendo abogado_id: {e}")
-                    
-                    # NUEVO: Subir archivo al bucket de Supabase Storage
-                    archivo_url = None
-                    if resultado.get("archivo_docx"):
-                        try:
-                            archivo_path = resultado["archivo_docx"]
-                            if os.path.exists(archivo_path):
-                                # Crear nombre único para el archivo
-                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                cliente_nombre = datos_cliente.get("nombre_completo", "Cliente").replace(" ", "_")
-                                nombre_archivo = f"{user_id}/demanda_{cliente_nombre}_{timestamp}.docx"
-                                
-                                # Leer archivo y verificar que sea válido
-                                with open(archivo_path, 'rb') as file:
-                                    archivo_bytes = file.read()
-                                
-                                # Verificar que el archivo no esté vacío
-                                if len(archivo_bytes) == 0:
-                                    raise Exception("El archivo generado está vacío")
-                                
-                                print(f"📄 Archivo a subir: {len(archivo_bytes)} bytes")
-                                
-                                # Intentar subida con diferentes métodos
-                                storage_response = None
-                                
-                                # Método 1: Con content-type específico
-                                try:
-                                    storage_response = supabase_admin.storage.from_('demandas-generadas').upload(
-                                        nombre_archivo, 
-                                        archivo_bytes,
-                                        file_options={
-                                            "content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                            "upsert": "true"
-                                        }
-                                    )
-                                    print(f"✅ Subida exitosa con content-type específico")
-                                except Exception as e1:
-                                    print(f"⚠️ Método 1 falló: {e1}")
-                                    
-                                    # Método 2: Sin content-type explícito
-                                    try:
-                                        storage_response = supabase_admin.storage.from_('demandas-generadas').upload(
-                                            nombre_archivo, 
-                                            archivo_bytes,
-                                            file_options={"upsert": "true"}
-                                        )
-                                        print(f"✅ Subida exitosa sin content-type")
-                                    except Exception as e2:
-                                        print(f"⚠️ Método 2 falló: {e2}")
-                                        
-                                        # Método 3: Solo el archivo, sin opciones
-                                        try:
-                                            storage_response = supabase_admin.storage.from_('demandas-generadas').upload(
-                                                nombre_archivo, 
-                                                archivo_bytes
-                                            )
-                                            print(f"✅ Subida exitosa sin opciones")
-                                        except Exception as e3:
-                                            print(f"⚠️ Método 3 falló: {e3}")
-                                            raise Exception(f"Todos los métodos de subida fallaron: {e1}, {e2}, {e3}")
-                                
-                                if storage_response:
-                                    # Generar URL pública
-                                    archivo_url = supabase_admin.storage.from_('demandas-generadas').get_public_url(nombre_archivo)
-                                    print(f"✅ Archivo subido a Storage: {nombre_archivo}")
-                                    print(f"🔗 URL pública: {archivo_url}")
-                                else:
-                                    print(f"⚠️ Error: storage_response es None")
-                            else:
-                                print(f"⚠️ Archivo no encontrado: {archivo_path}")
-                        except Exception as storage_error:
-                            print(f"⚠️ Error subiendo a Storage: {storage_error}")
-                            # Continuar sin archivo en Storage
-                    
-                    # Preparar datos para guardar
-                    demanda_data = {
-                        "session_id": session_id,  # Nueva columna
-                        "sesion_id": None,  # Mantener NULL por ahora
-                        "abogado_id": abogado_id,
-                        "user_id": user_id,
-                        "tipo_demanda": session["tipo_demanda"],
-                        "datos_cliente": datos_cliente,
-                        "hechos_adicionales": session.get("hechos_adicionales", ""),
-                        "notas_abogado": session.get("notas_abogado", ""),
-                        "texto_demanda": resultado.get("texto_demanda", ""),
-                        "metadatos": resultado.get("metadatos", {}),
-                        "archivo_docx": resultado.get("archivo_docx", ""),
-                        "archivo_docx_url": archivo_url,  # URL de Supabase Storage
-                        "estado": "completado",
-                        "fecha_generacion": datetime.now().isoformat()
-                    }
-                    
-                    print(f"💾 Guardando demanda en base de datos")
-                    print(f"   session_id: {session_id}")
-                    print(f"   user_id: {user_id}")
-                    print(f"   abogado_id: {abogado_id}")
-                    print(f"   archivo_url: {archivo_url}")
-                    
-                    # Buscar si ya existe una demanda para esta sesión
-                    existing_response = supabase_admin.table('demandas_generadas')\
-                        .select('id')\
-                        .eq('session_id', session_id)\
-                        .execute()
-                    
-                    if existing_response.data:
-                        # Actualizar demanda existente
-                        update_response = supabase_admin.table('demandas_generadas')\
-                            .update(demanda_data)\
-                            .eq('session_id', session_id)\
-                            .execute()
-                        print(f"✅ Demanda actualizada en base de datos")
-                    else:
-                        # Crear nueva demanda
-                        insert_response = supabase_admin.table('demandas_generadas')\
-                            .insert(demanda_data)\
-                            .execute()
-                        print(f"✅ Nueva demanda guardada en base de datos")
-                        
-                except Exception as db_error:
-                    print(f"⚠️ Error guardando en base de datos: {db_error}")
-                    # Continuar aunque falle el guardado en DB
-                
-                session["estado"] = "completado"
-                session["resultado"] = resultado
-                
-                print(f"✅ Demanda generada en {elapsed_time:.1f} segundos")
-                
-                return {
-                    "session_id": session_id,
-                    "mensaje": "✅ **Demanda generada exitosamente**\\n\\nHe creado la demanda profesional basándome en los casos similares de la base de datos. El documento incluye:\\n\\n• Hechos estructurados según jurisprudencia\\n• Base legal con artículos específicos de la LCT\\n• Petitorio adaptado al tipo de caso\\n• Ofrecimiento de prueba detallado\\n\\n**Opciones disponibles:**\\n🔍 **Previsualizar** - Ver la demanda antes de descargar\\n📄 **Descargar** - Obtener el archivo Word\\n🔄 **Regenerar** - Crear una nueva versión",
-                    "tipo": "bot",
-                    "timestamp": datetime.now().isoformat(),
-                    "demanda_generada": True,
-                    "mostrar_preview": True
-                }
-                
-            except Exception as e:
-                print(f"❌ Error generando demanda: {e}")
-                return {
-                    "session_id": session_id,
-                    "mensaje": f"❌ Error al generar la demanda: {str(e)}\\n\\nPor favor, verifica que hayas proporcionado:\\n• Tipo de demanda\\n• Nombre completo del cliente\\n• DNI del cliente\\n• Hechos básicos del caso",
-                    "tipo": "bot",
-                    "timestamp": datetime.now().isoformat(),
-                    "demanda_generada": False
-                }
+        datos_cliente = session.get("datos_cliente", {})
+        tipo_demanda = session.get("tipo_demanda", "")
+        hechos = session.get("hechos_adicionales", "")
         
-        # Respuesta normal de conversación
-        mensaje = respuesta_ia.get("mensaje_respuesta", "¿En qué puedo ayudarte con la demanda?")
+        # Información disponible de documentos
+        tiene_documentos = bool(info_documentos.get("transcripcion_completa"))
+        personas_docs = info_documentos.get("personas_identificadas", [])
+        empresas_docs = info_documentos.get("empresas_identificadas", [])
+        fechas_docs = info_documentos.get("fechas_importantes", [])
+        montos_docs = info_documentos.get("montos_encontrados", [])
         
-        # Agregar opciones si hay tipos disponibles y no se ha seleccionado
-        opciones = None
-        if not session.get("tipo_demanda") and respuesta_ia.get("accion") == "seleccionar_tipo":
-            opciones = self.tipos_disponibles
+        # Evaluar completitud de forma inteligente
+        información_critica = {
+            "cliente_identificado": bool(datos_cliente.get("nombre_completo") or personas_docs),
+            "dni_disponible": bool(datos_cliente.get("dni")),
+            "tipo_demanda_definido": bool(tipo_demanda),
+            "contexto_caso": bool(hechos or tiene_documentos),
+            "documentos_procesados": tiene_documentos,
+            "empresas_identificadas": bool(empresas_docs),
+            "información_temporal": bool(fechas_docs),
+            "información_económica": bool(montos_docs)
+        }
+        
+        # Calcular completitud de forma más inteligente
+        elementos_criticos = ["cliente_identificado", "tipo_demanda_definido", "contexto_caso"]
+        elementos_opcionales = ["dni_disponible", "documentos_procesados", "empresas_identificadas", "información_temporal", "información_económica"]
+        
+        criticos_completos = sum(1 for elem in elementos_criticos if información_critica[elem])
+        opcionales_completos = sum(1 for elem in elementos_opcionales if información_critica[elem])
+        
+        # Si tiene documentos procesados, es mucho más probable que esté completo
+        if tiene_documentos and criticos_completos >= 2:
+            porcentaje = min(95, 60 + (criticos_completos * 15) + (opcionales_completos * 5))
+        else:
+            porcentaje = (criticos_completos * 25) + (opcionales_completos * 8)
+        
+        # Determinar qué falta realmente
+        faltantes_criticos = [elem for elem in elementos_criticos if not información_critica[elem]]
+        
+        return {
+            "completo": len(faltantes_criticos) == 0 and porcentaje >= 70,
+            "porcentaje_completo": min(100, porcentaje),
+            "información_critica": información_critica,
+            "faltantes_criticos": faltantes_criticos,
+            "tiene_documentos": tiene_documentos,
+            "resumen_disponible": {
+                "personas": personas_docs,
+                "empresas": empresas_docs,
+                "fechas": fechas_docs,
+                "montos": montos_docs
+            }
+        }
+
+    def _generar_respuesta_inteligente(self, session: Dict, session_id: str, mensaje_usuario: str, respuesta_ia: Dict) -> str:
+        """Genera respuestas más inteligentes basadas en toda la información disponible."""
+        
+        evaluacion = self._evaluar_informacion_completa(session, session_id)
+        datos_cliente = session.get("datos_cliente", {})
+        tipo_demanda = session.get("tipo_demanda", "")
+        estado = session.get("estado", "inicio")
+        
+        # SIEMPRE mostrar mensaje inicial cuando el estado es "inicio"
+        # Esto asegura que el primer mensaje del bot sea siempre el mensaje de bienvenida
+        if estado == "inicio":
+            return self._generar_mensaje_inicial()
+        
+        # Si acabamos de detectar un tipo de demanda pero no tenemos datos del cliente
+        if tipo_demanda and not datos_cliente.get("nombre_completo") and len(mensaje_usuario.strip()) < 50:
+            return f"Perfecto, {tipo_demanda}. ¿Cuál es el nombre completo de su cliente? También puede subir documentos con esta información."
+        
+        # Si la información está completa, sugerir generar demanda
+        if evaluacion["completo"]:
+            return "✅ **Información completa!** Tengo todos los datos necesarios para generar la demanda. ¿Confirma que proceda a generar el documento?"
+        
+        # Si hay documentos procesados, hacer una evaluación integral
+        if evaluacion["tiene_documentos"]:
+            return self._generar_respuesta_con_documentos(session, evaluacion, mensaje_usuario)
+        
+        # Si no hay documentos pero tiene información básica
+        if evaluacion["porcentaje_completo"] >= 40:
+            return self._generar_respuesta_consolidada(session, evaluacion)
+        
+        # Respuesta básica para casos simples
+        return self._generar_respuesta_basica(session, mensaje_usuario)
+
+    def _generar_respuesta_con_documentos(self, session: Dict, evaluacion: Dict, mensaje_usuario: str) -> str:
+        """Genera respuesta cuando hay documentos procesados - más inteligente."""
+        
+        datos_cliente = session.get("datos_cliente", {})
+        tipo_demanda = session.get("tipo_demanda", "")
+        resumen = evaluacion["resumen_disponible"]
+        
+        # Si la evaluación indica que está completo o casi completo
+        if evaluacion["completo"] or evaluacion["porcentaje_completo"] >= 80:
+            mensaje = "✅ **Excelente! He procesado la información de los documentos.**\n\n"
+            
+            # Mostrar información consolidada
+            if resumen["personas"]:
+                mensaje += f"👤 **Cliente identificado:** {resumen['personas'][0]}\n"
+            if tipo_demanda:
+                mensaje += f"⚖️ **Tipo de demanda:** {tipo_demanda}\n"
+            if resumen["empresas"]:
+                mensaje += f"🏢 **Empresas involucradas:** {', '.join(resumen['empresas'][:2])}\n"
+            if resumen["fechas"]:
+                mensaje += f"📅 **Fechas relevantes:** {', '.join(resumen['fechas'][:3])}\n"
+            if resumen["montos"]:
+                mensaje += f"💰 **Montos encontrados:** {', '.join(resumen['montos'][:2])}\n"
+            
+            mensaje += f"\n**¿Esta información es correcta?**\n"
+            mensaje += f"✅ **Generar demanda** con esta información\n"
+            mensaje += f"✏️ **Agregar/modificar** algún detalle\n"
+            mensaje += f"📤 **Subir más documentos** si faltan"
+            
+            return mensaje
+        
+        # Si falta información crítica
+        faltantes = evaluacion["faltantes_criticos"]
+        mensaje = "📄 **He procesado los documentos subidos.**\n\n"
+        
+        # Mostrar lo que se encontró
+        if resumen["personas"]:
+            mensaje += f"✅ Cliente identificado: {resumen['personas'][0]}\n"
+        if resumen["empresas"]:
+            mensaje += f"✅ Empresas: {', '.join(resumen['empresas'][:2])}\n"
+        if tipo_demanda:
+            mensaje += f"✅ Tipo de demanda: {tipo_demanda}\n"
+        
+        # Indicar qué falta específicamente
+        if "cliente_identificado" in faltantes:
+            mensaje += f"\n❓ **¿Cuál es el nombre completo del cliente?**"
+        elif "tipo_demanda_definido" in faltantes:
+            mensaje += f"\n❓ **¿Qué tipo de demanda necesitas?** (despido, licencia médica, solidaridad, etc.)"
+        elif "contexto_caso" in faltantes:
+            mensaje += f"\n❓ **¿Puedes contarme los detalles del caso?**"
+        else:
+            mensaje += f"\n✅ **¿Procedo a generar la demanda?**"
+        
+        return mensaje
+
+    def _generar_respuesta_consolidada(self, session: Dict, evaluacion: Dict) -> str:
+        """Genera respuesta consolidada cuando hay información parcial."""
+        
+        datos_cliente = session.get("datos_cliente", {})
+        tipo_demanda = session.get("tipo_demanda", "")
+        hechos = session.get("hechos_adicionales", "")
+        
+        mensaje = "📋 **Información recibida:**\n\n"
+        
+        # Mostrar lo que se tiene
+        if datos_cliente.get("nombre_completo"):
+            mensaje += f"✅ Cliente: {datos_cliente['nombre_completo']}\n"
+        if datos_cliente.get("dni"):
+            mensaje += f"✅ DNI: {datos_cliente['dni']}\n"
+        if tipo_demanda:
+            mensaje += f"✅ Tipo: {tipo_demanda}\n"
+        if hechos:
+            mensaje += f"✅ Contexto: {hechos[:100]}...\n"
+        
+        # Determinar qué falta
+        faltantes = evaluacion["faltantes_criticos"]
+        
+        if len(faltantes) == 0:
+            mensaje += f"\n🎯 **¿Procedo a generar la demanda?**"
+        elif len(faltantes) == 1:
+            if "cliente_identificado" in faltantes:
+                mensaje += f"\n❓ Solo falta el **nombre del cliente**"
+            elif "tipo_demanda_definido" in faltantes:
+                mensaje += f"\n❓ Solo falta definir el **tipo de demanda**"
+            else:
+                mensaje += f"\n❓ Solo faltan los **detalles del caso**"
+        else:
+            mensaje += f"\n💡 **Puedes subir documentos o contarme más detalles del caso**"
+        
+        return mensaje
+
+    def _generar_respuesta_basica(self, session: Dict, mensaje_usuario: str) -> str:
+        """Genera respuesta básica para casos simples."""
+        
+        tipo_demanda = session.get("tipo_demanda", "")
+        datos_cliente = session.get("datos_cliente", {})
+        
+        if not tipo_demanda:
+            return "¿Qué tipo de demanda necesita para su cliente? Puedo ayudarle con despidos, licencias médicas, solidaridad laboral, etc. También puede subir documentos del caso."
+        
+        elif not datos_cliente.get("nombre_completo"):
+            return f"Perfecto, {tipo_demanda}. ¿Cuál es el nombre completo de su cliente? También puede subir documentos con esta información."
+        
+        else:
+            return "Excelente. ¿Puede contarme los detalles del caso de su cliente o subir documentos relacionados?"
+
+    def _generar_mensaje_inicial(self) -> str:
+        """Genera un mensaje inicial explicativo para el abogado."""
+        # Obtener categorías disponibles del usuario
+        categorias_disponibles = []
+        if hasattr(self, 'tipos_disponibles') and self.tipos_disponibles:
+            categorias_disponibles = self.tipos_disponibles
+        
+        mensaje = """¡Hola doctor! Soy su asistente legal inteligente. 🏛️
+
+**Para generar una demanda, puede:**
+
+📤 **Subir archivos:** telegramas, cartas documento, recibos, anotaciones, etc.
+💬 **Escribir detalles:** datos del cliente, hechos del caso, tipo de demanda
+🔄 **Combinar ambos:** La información se consolidará automáticamente
+
+¿Con qué tipo de caso necesita ayuda? Puede contarme los detalles o subir documentos directamente."""
+        
+        return mensaje
+
+    async def _preparar_para_qa_agent(self, session: Dict, session_id: str) -> Dict:
+        """Prepara la información para QAAgent y genera la demanda."""
+        
+        # Obtener información consolidada de documentos (imágenes procesadas)
+        info_documentos = {}
+        try:
+            from rag.qa_agent import obtener_informacion_documentos_sincrona
+            info_documentos = obtener_informacion_documentos_sincrona(session_id)
+            print(f"📄 Información de documentos obtenida: {len(info_documentos.get('transcripcion_completa', ''))} caracteres")
+        except Exception as e:
+            print(f"⚠️ Error obteniendo documentos: {e}")
+        
+        # Crear resumen para confirmación
+        resumen = self._crear_resumen_para_abogado(session, info_documentos)
         
         return {
             "session_id": session_id,
-            "mensaje": mensaje,
-            "tipo": "bot", 
+            "mensaje": resumen["mensaje"],
+            "tipo": "bot",
             "timestamp": datetime.now().isoformat(),
-            "opciones": opciones,
-            "requiere_datos": respuesta_ia.get("accion") == "solicitar_info_critica",
-            "demanda_generada": False
+            "demanda_generada": False,
+            "mostrar_confirmacion": True,
+            "resumen_datos": resumen["datos"],
+            "listo_para_qa_agent": True  # Nueva bandera
         }
+
+    def _crear_resumen_para_abogado(self, session: Dict, info_documentos: Dict) -> Dict:
+        """Crea un resumen más inteligente incluyendo documentos procesados."""
+        
+        datos_cliente = session.get("datos_cliente", {})
+        tipo_demanda = session.get("tipo_demanda", "")
+        hechos = session.get("hechos_adicionales", "")
+        notas = session.get("notas_abogado", "")
+        
+        mensaje = f"## 📋 **RESUMEN PARA GENERAR DEMANDA**\\n\\n"
+        
+        # Información del cliente
+        if datos_cliente.get("nombre_completo"):
+            mensaje += f"**👤 CLIENTE:** {datos_cliente['nombre_completo']}\\n"
+            if datos_cliente.get("dni"):
+                mensaje += f"**🆔 DNI:** {datos_cliente['dni']}\\n"
+            if datos_cliente.get("domicilio"):
+                mensaje += f"**📍 DOMICILIO:** {datos_cliente['domicilio']}\\n"
+            if datos_cliente.get("telefono"):
+                mensaje += f"**📞 TELÉFONO:** {datos_cliente['telefono']}\\n"
+            if datos_cliente.get("email"):
+                mensaje += f"**📧 EMAIL:** {datos_cliente['email']}\\n"
+            if datos_cliente.get("ocupacion"):
+                mensaje += f"**💼 OCUPACIÓN:** {datos_cliente['ocupacion']}\\n"
+        else:
+            mensaje += f"**👤 CLIENTE:** No especificado\\n"
+        
+        # Tipo de demanda
+        if tipo_demanda:
+            mensaje += f"\\n**⚖️ TIPO DE DEMANDA:** {tipo_demanda}\\n"
+        else:
+            mensaje += f"\\n**⚖️ TIPO DE DEMANDA:** No especificado\\n"
+        
+        # Documentos procesados
+        if info_documentos.get("transcripcion_completa"):
+            num_docs = info_documentos.get("documentos_procesados", 0)
+            mensaje += f"\\n**📄 DOCUMENTOS PROCESADOS:** {num_docs} archivo(s)\\n"
+            mensaje += f"• Transcripción: {len(info_documentos['transcripcion_completa'])} caracteres\\n"
+            
+            # Información extraída de documentos
+            if info_documentos.get("personas_identificadas"):
+                personas = info_documentos['personas_identificadas'][:5]  # Máximo 5
+                mensaje += f"• Personas identificadas: {', '.join(personas)}{'...' if len(info_documentos['personas_identificadas']) > 5 else ''}\\n"
+            
+            if info_documentos.get("empresas_identificadas"):
+                empresas = info_documentos['empresas_identificadas'][:3]  # Máximo 3
+                mensaje += f"• Empresas identificadas: {', '.join(empresas)}{'...' if len(info_documentos['empresas_identificadas']) > 3 else ''}\\n"
+            
+            if info_documentos.get("fechas_importantes"):
+                fechas = info_documentos['fechas_importantes'][:5]  # Máximo 5
+                mensaje += f"• Fechas importantes: {', '.join(fechas)}{'...' if len(info_documentos['fechas_importantes']) > 5 else ''}\\n"
+            
+            if info_documentos.get("montos_encontrados"):
+                montos = info_documentos['montos_encontrados'][:3]  # Máximo 3
+                mensaje += f"• Montos encontrados: {', '.join(montos)}{'...' if len(info_documentos['montos_encontrados']) > 3 else ''}\\n"
+        else:
+            mensaje += f"\\n**📄 DOCUMENTOS PROCESADOS:** Ninguno\\n"
+        
+        # Hechos adicionales
+        if hechos:
+            mensaje += f"\\n**📝 HECHOS ADICIONALES:**\\n{hechos[:300]}{'...' if len(hechos) > 300 else ''}\\n"
+        else:
+            mensaje += f"\\n**📝 HECHOS ADICIONALES:** No especificados\\n"
+        
+        # Notas del abogado
+        if notas:
+            mensaje += f"\\n**📋 NOTAS DEL ABOGADO:**\\n{notas[:200]}{'...' if len(notas) > 200 else ''}\\n"
+        
+        mensaje += "\\n**✅ ¿CONFIRMA QUE ESTA INFORMACIÓN ES CORRECTA?**\\n\\n"
+        mensaje += "**Opciones:**\\n"
+        mensaje += "✅ **GENERAR DEMANDA** - Crear documento con esta información\\n"
+        mensaje += "✏️ **MODIFICAR DATOS** - Agregar o cambiar información\\n"
+        mensaje += "📁 **AGREGAR DOCUMENTOS** - Subir más imágenes o archivos\\n"
+        mensaje += "❌ **CANCELAR** - No generar en este momento"
+        
+        return {
+            "mensaje": mensaje,
+            "datos": {
+                "cliente": datos_cliente,
+                "tipo_demanda": tipo_demanda,
+                "hechos": hechos,
+                "notas": notas,
+                "documentos": info_documentos,
+                "resumen_completo": {
+                    "personas": info_documentos.get("personas_identificadas", []),
+                    "empresas": info_documentos.get("empresas_identificadas", []),
+                    "fechas": info_documentos.get("fechas_importantes", []),
+                    "montos": info_documentos.get("montos_encontrados", [])
+                }
+            }
+        }
+
+    def _detectar_informacion_automatica(self, session: Dict, session_id: str) -> Dict:
+        """Detecta automáticamente información de documentos procesados y la usa sin confirmación."""
+        try:
+            from rag.qa_agent import obtener_informacion_documentos_sincrona
+            info_documentos = obtener_informacion_documentos_sincrona(session_id)
+            
+            if not info_documentos.get("transcripcion_completa"):
+                return {}
+            
+            datos_cliente = session.get("datos_cliente", {})
+            cambios_realizados = {}
+            
+            # Detectar nombre automáticamente si no existe
+            if not datos_cliente.get("nombre_completo") and info_documentos.get("personas_identificadas"):
+                personas = info_documentos["personas_identificadas"]
+                if personas:
+                    # Usar el primer nombre como cliente principal
+                    nombre_detectado = personas[0]
+                    if 'datos_cliente' not in session:
+                        session['datos_cliente'] = {}
+                    session['datos_cliente']['nombre_completo'] = nombre_detectado
+                    cambios_realizados['nombre_completo'] = nombre_detectado
+                    print(f"🤖 Nombre detectado automáticamente: {nombre_detectado}")
+            
+            # Detectar tipo de demanda automáticamente si no existe
+            if not session.get("tipo_demanda"):
+                transcripcion = info_documentos["transcripcion_completa"].lower()
+                tipo_detectado = None
+                
+                if "negro" in transcripcion and "blanco" in transcripcion:
+                    tipo_detectado = "Empleados Blanco Negro"
+                elif "negro" in transcripcion:
+                    tipo_detectado = "Empleados En Negro"
+                elif "blanco" in transcripcion:
+                    tipo_detectado = "Empleados En Blanco"
+                elif "licencia" in transcripcion and ("medica" in transcripcion or "médica" in transcripcion):
+                    tipo_detectado = "Demanda Licencia Medica"
+                elif "solidaridad" in transcripcion:
+                    tipo_detectado = "Demanda Solidaridad Laboral"
+                
+                if tipo_detectado:
+                    session['tipo_demanda'] = tipo_detectado
+                    cambios_realizados['tipo_demanda'] = tipo_detectado
+                    print(f"🤖 Tipo de demanda detectado automáticamente: {tipo_detectado}")
+            
+            # Detectar hechos automáticamente si no existen
+            if not session.get("hechos_adicionales"):
+                transcripcion = info_documentos["transcripcion_completa"]
+                # Extraer información relevante del documento
+                hechos_detectados = self._extraer_hechos_del_documento(transcripcion)
+                if hechos_detectados:
+                    session['hechos_adicionales'] = hechos_detectados
+                    cambios_realizados['hechos_adicionales'] = hechos_detectados
+                    print(f"🤖 Hechos detectados automáticamente: {hechos_detectados[:100]}...")
+            
+            return cambios_realizados
+            
+        except Exception as e:
+            print(f"⚠️ Error detectando información automática: {e}")
+            return {}
+    
+    def _extraer_hechos_del_documento(self, transcripcion: str) -> str:
+        """Extrae hechos relevantes del documento procesado."""
+        hechos = []
+        
+        # Detectar patrones comunes en documentos legales
+        if "despid" in transcripcion.lower():
+            hechos.append("Despido laboral")
+        
+        if "sin causa" in transcripcion.lower():
+            hechos.append("Despido sin causa aparente")
+        
+        if "negro" in transcripcion.lower():
+            hechos.append("Trabajo en negro")
+        
+        if "blanco" in transcripcion.lower():
+            hechos.append("Trabajo en blanco")
+        
+        if "solidaridad" in transcripcion.lower():
+            hechos.append("Solidaridad laboral")
+        
+        if "licencia" in transcripcion.lower():
+            hechos.append("Licencia médica")
+        
+        if "salario" in transcripcion.lower() or "sueldo" in transcripcion.lower():
+            hechos.append("Problemas con salarios")
+        
+        if "horas extras" in transcripcion.lower() or "horas extra" in transcripcion.lower():
+            hechos.append("Horas extras no pagadas")
+        
+        # Extraer información de empresas mencionadas
+        empresas = []
+        if "empresa" in transcripcion.lower():
+            # Buscar nombres de empresas después de "empresa"
+            import re
+            matches = re.findall(r'empresa\s+([A-Z][A-Z0-9\s]+)', transcripcion, re.IGNORECASE)
+            empresas.extend(matches)
+        
+        if empresas:
+            hechos.append(f"Empresa(s) involucrada(s): {', '.join(empresas[:2])}")
+        
+        if hechos:
+            return f"Documento indica: {', '.join(hechos)}. Contexto: {transcripcion[:200]}..."
+        
+        return ""
+
+    def _generar_mensaje_informacion_extraida(self, cambios_automaticos: Dict, session: Dict, session_id: str) -> str:
+        """Genera un mensaje mostrando la información extraída automáticamente de documentos."""
+        
+        if not cambios_automaticos:
+            return ""
+        
+        try:
+            from rag.qa_agent import obtener_informacion_documentos_sincrona
+            info_documentos = obtener_informacion_documentos_sincrona(session_id)
+        except:
+            info_documentos = {}
+        
+        mensaje = "🤖 **INFORMACIÓN DETECTADA AUTOMÁTICAMENTE**\n\n"
+        
+        # Mostrar información del cliente detectada
+        if cambios_automaticos.get('nombre_completo'):
+            mensaje += f"👤 **Cliente identificado:** {cambios_automaticos['nombre_completo']}\n"
+        
+        # Mostrar tipo de demanda detectado
+        if cambios_automaticos.get('tipo_demanda'):
+            mensaje += f"⚖️ **Tipo de demanda:** {cambios_automaticos['tipo_demanda']}\n"
+        
+        # Mostrar hechos detectados
+        if cambios_automaticos.get('hechos_adicionales'):
+            hechos = cambios_automaticos['hechos_adicionales'][:200]
+            mensaje += f"📝 **Hechos detectados:** {hechos}...\n"
+        
+        # Mostrar información adicional de documentos
+        if info_documentos.get("empresas_identificadas"):
+            empresas = info_documentos["empresas_identificadas"][:2]
+            mensaje += f"🏢 **Empresas:** {', '.join(empresas)}\n"
+        
+        if info_documentos.get("fechas_importantes"):
+            fechas = info_documentos["fechas_importantes"][:3]
+            mensaje += f"📅 **Fechas relevantes:** {', '.join(fechas)}\n"
+        
+        if info_documentos.get("montos_encontrados"):
+            montos = info_documentos["montos_encontrados"][:2]
+            mensaje += f"💰 **Montos:** {', '.join(montos)}\n"
+        
+        mensaje += "\n**¿Esta información es correcta?**\n"
+        mensaje += "✅ **Sí, proceder** - Generar demanda con esta información\n"
+        mensaje += "✏️ **Modificar** - Agregar o cambiar datos\n"
+        mensaje += "📤 **Subir más documentos** - Si falta información"
+        
+        return mensaje
 
 # Instancia global del agente - se inicializa bajo demanda
 chat_agent = None
 
-def get_chat_agent():
+def get_chat_agent(user_id: str = None):
     """Obtiene o crea la instancia del agente de chat."""
     global chat_agent
+    
+    # Si se proporciona user_id, crear nueva instancia específica
+    if user_id:
+        try:
+            print(f"🔧 Creando nueva instancia de ChatAgentInteligente para user_id: {user_id}")
+            chat_agent = ChatAgentInteligente(user_id=user_id)
+            print(f"✅ ChatAgentInteligente creado exitosamente con tipos dinámicos")
+        except Exception as e:
+            print(f"⚠️ Error inicializando ChatAgentInteligente: {e}")
+            import traceback
+            traceback.print_exc()
+            chat_agent = None
+        return chat_agent
+    
+    # Si no hay user_id, usar lógica existente
     if chat_agent is None:
         try:
             print(f"🔧 Creando nueva instancia de ChatAgentInteligente...")

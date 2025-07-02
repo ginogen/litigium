@@ -2,28 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '@/utils';
-import { User, Mail, Phone, MapPin, GraduationCap, Calendar, Save, Edit, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, MapPin, GraduationCap, Building, Save, Edit, FileText, CreditCard } from 'lucide-react';
 
 export function ProfileSection() {
   const { profile, updateProfile, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     nombre_completo: '',
     matricula_profesional: '',
     colegio_abogados: '',
     telefono: '',
     domicilio_profesional: '',
-    ciudad: '',
-    provincia: '',
-    codigo_postal: '',
-    especialidad: [] as string[],
-    anos_experiencia: 0,
-    universidad: '',
-    ano_graduacion: undefined as number | undefined,
-    tribunal_predeterminado: '',
-    formato_demanda_preferido: 'formal',
+    tomo: '',
+    folio: '',
+    condicion_fiscal: '',
+    cuit: '',
+    legajo: '',
+    nombre_estudio: '',
   });
 
   // Mutation para actualizar perfil
@@ -55,15 +51,12 @@ export function ProfileSection() {
         colegio_abogados: profile.colegio_abogados || '',
         telefono: profile.telefono || '',
         domicilio_profesional: profile.domicilio_profesional || '',
-        ciudad: profile.ciudad || '',
-        provincia: profile.provincia || '',
-        codigo_postal: profile.codigo_postal || '',
-        especialidad: profile.especialidad || [],
-        anos_experiencia: profile.anos_experiencia || 0,
-        universidad: profile.universidad || '',
-        ano_graduacion: profile.ano_graduacion || undefined,
-        tribunal_predeterminado: profile.tribunal_predeterminado || '',
-        formato_demanda_preferido: profile.formato_demanda_preferido || 'formal',
+        tomo: profile.tomo || '',
+        folio: profile.folio || '',
+        condicion_fiscal: profile.condicion_fiscal || '',
+        cuit: profile.cuit || '',
+        legajo: profile.legajo || '',
+        nombre_estudio: profile.nombre_estudio || '',
       });
     }
     
@@ -80,11 +73,6 @@ export function ProfileSection() {
     }));
   };
 
-  const handleSpecialtyChange = (specialties: string) => {
-    const specialtyArray = specialties.split(',').map(s => s.trim()).filter(s => s);
-    handleInputChange('especialidad', specialtyArray);
-  };
-
   const handleSave = async () => {
     updateProfileMutation.mutate(formData);
   };
@@ -98,15 +86,12 @@ export function ProfileSection() {
         colegio_abogados: profile.colegio_abogados || '',
         telefono: profile.telefono || '',
         domicilio_profesional: profile.domicilio_profesional || '',
-        ciudad: profile.ciudad || '',
-        provincia: profile.provincia || '',
-        codigo_postal: profile.codigo_postal || '',
-        especialidad: profile.especialidad || [],
-        anos_experiencia: profile.anos_experiencia || 0,
-        universidad: profile.universidad || '',
-        ano_graduacion: profile.ano_graduacion || undefined,
-        tribunal_predeterminado: profile.tribunal_predeterminado || '',
-        formato_demanda_preferido: profile.formato_demanda_preferido || 'formal',
+        tomo: profile.tomo || '',
+        folio: profile.folio || '',
+        condicion_fiscal: profile.condicion_fiscal || '',
+        cuit: profile.cuit || '',
+        legajo: profile.legajo || '',
+        nombre_estudio: profile.nombre_estudio || '',
       });
     }
     setIsEditing(false);
@@ -119,10 +104,12 @@ export function ProfileSection() {
       formData.colegio_abogados,
       formData.telefono,
       formData.domicilio_profesional,
-      formData.ciudad,
-      formData.provincia,
-      formData.especialidad.length > 0,
-      formData.universidad,
+      formData.tomo,
+      formData.folio,
+      formData.condicion_fiscal,
+      formData.cuit,
+      formData.legajo,
+      formData.nombre_estudio,
     ];
     
     const filledFields = fields.filter(field => field && field !== '').length;
@@ -139,7 +126,7 @@ export function ProfileSection() {
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-2">Mi Perfil Profesional</h1>
             <p className="text-muted-foreground">
-              Administra tu información profesional y preferencias del sistema
+              Administra tu información profesional y datos del estudio jurídico
             </p>
           </div>
           
@@ -194,11 +181,11 @@ export function ProfileSection() {
       {/* Contenido principal */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto space-y-8">
-          {/* Información personal */}
+          {/* Información personal y de contacto */}
           <div className="bg-card/50 border border-border rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
               <User className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Información Personal</h2>
+              <h2 className="text-lg font-semibold text-foreground">Información Personal y Contacto</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -252,7 +239,26 @@ export function ProfileSection() {
                       ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
                   )}
-                  placeholder="+34 600 123 456"
+                  placeholder="+54 11 1234-5678"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Domicilio profesional
+                </label>
+                <input
+                  type="text"
+                  value={formData.domicilio_profesional}
+                  onChange={(e) => handleInputChange('domicilio_profesional', e.target.value)}
+                  disabled={!isEditing}
+                  className={cn(
+                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
+                    isEditing 
+                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
+                  )}
+                  placeholder="Av. Corrientes 1234, CABA"
                 />
               </div>
             </div>
@@ -300,20 +306,18 @@ export function ProfileSection() {
                       ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
                   )}
-                  placeholder="Ilustre Colegio de Abogados de Madrid"
+                  placeholder="Colegio de Abogados de la Ciudad de Buenos Aires"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Años de experiencia
+                  Tomo
                 </label>
                 <input
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={formData.anos_experiencia}
-                  onChange={(e) => handleInputChange('anos_experiencia', parseInt(e.target.value) || 0)}
+                  type="text"
+                  value={formData.tomo}
+                  onChange={(e) => handleInputChange('tomo', e.target.value)}
                   disabled={!isEditing}
                   className={cn(
                     "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
@@ -321,18 +325,18 @@ export function ProfileSection() {
                       ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
                   )}
-                  placeholder="5"
+                  placeholder="123"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Universidad
+                  Folio
                 </label>
                 <input
                   type="text"
-                  value={formData.universidad}
-                  onChange={(e) => handleInputChange('universidad', e.target.value)}
+                  value={formData.folio}
+                  onChange={(e) => handleInputChange('folio', e.target.value)}
                   disabled={!isEditing}
                   className={cn(
                     "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
@@ -340,69 +344,18 @@ export function ProfileSection() {
                       ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
                   )}
-                  placeholder="Universidad Complutense de Madrid"
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Especialidades
-                </label>
-                <input
-                  type="text"
-                  value={formData.especialidad.join(', ')}
-                  onChange={(e) => handleSpecialtyChange(e.target.value)}
-                  disabled={!isEditing}
-                  className={cn(
-                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
-                    isEditing 
-                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
-                  )}
-                  placeholder="Derecho Civil, Derecho Laboral, Derecho Penal..."
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Separa las especialidades con comas
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Dirección profesional */}
-          <div className="bg-card/50 border border-border rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <MapPin className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Dirección Profesional</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Domicilio profesional
-                </label>
-                <input
-                  type="text"
-                  value={formData.domicilio_profesional}
-                  onChange={(e) => handleInputChange('domicilio_profesional', e.target.value)}
-                  disabled={!isEditing}
-                  className={cn(
-                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
-                    isEditing 
-                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
-                  )}
-                  placeholder="Calle Alcalá, 123, 2º A"
+                  placeholder="456"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Código postal
+                  Legajo
                 </label>
                 <input
                   type="text"
-                  value={formData.codigo_postal}
-                  onChange={(e) => handleInputChange('codigo_postal', e.target.value)}
+                  value={formData.legajo}
+                  onChange={(e) => handleInputChange('legajo', e.target.value)}
                   disabled={!isEditing}
                   className={cn(
                     "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
@@ -410,84 +363,27 @@ export function ProfileSection() {
                       ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
                   )}
-                  placeholder="28014"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Ciudad
-                </label>
-                <input
-                  type="text"
-                  value={formData.ciudad}
-                  onChange={(e) => handleInputChange('ciudad', e.target.value)}
-                  disabled={!isEditing}
-                  className={cn(
-                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
-                    isEditing 
-                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
-                  )}
-                  placeholder="Madrid"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Provincia
-                </label>
-                <input
-                  type="text"
-                  value={formData.provincia}
-                  onChange={(e) => handleInputChange('provincia', e.target.value)}
-                  disabled={!isEditing}
-                  className={cn(
-                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
-                    isEditing 
-                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
-                  )}
-                  placeholder="Madrid"
+                  placeholder="L-789"
                 />
               </div>
             </div>
           </div>
 
-          {/* Preferencias del sistema */}
+          {/* Información fiscal y estudio */}
           <div className="bg-card/50 border border-border rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
-              <Calendar className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Preferencias del Sistema</h2>
+              <Building className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Información Fiscal y Estudio</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Tribunal predeterminado
-                </label>
-                <input
-                  type="text"
-                  value={formData.tribunal_predeterminado}
-                  onChange={(e) => handleInputChange('tribunal_predeterminado', e.target.value)}
-                  disabled={!isEditing}
-                  className={cn(
-                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
-                    isEditing 
-                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
-                  )}
-                  placeholder="Juzgado de Primera Instancia nº 1 de Madrid"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Formato de demanda preferido
+                  Condición Fiscal
                 </label>
                 <select
-                  value={formData.formato_demanda_preferido}
-                  onChange={(e) => handleInputChange('formato_demanda_preferido', e.target.value)}
+                  value={formData.condicion_fiscal}
+                  onChange={(e) => handleInputChange('condicion_fiscal', e.target.value)}
                   disabled={!isEditing}
                   className={cn(
                     "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
@@ -496,10 +392,50 @@ export function ProfileSection() {
                       : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
                   )}
                 >
-                  <option value="formal">Formal completo</option>
-                  <option value="simplificado">Simplificado</option>
-                  <option value="completo">Completo detallado</option>
+                  <option value="">Seleccionar condición fiscal</option>
+                  <option value="Responsable Inscripto">Responsable Inscripto</option>
+                  <option value="Monotributista">Monotributista</option>
+                  <option value="Exento">Exento</option>
+                  <option value="No Responsable">No Responsable</option>
                 </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  CUIT
+                </label>
+                <input
+                  type="text"
+                  value={formData.cuit}
+                  onChange={(e) => handleInputChange('cuit', e.target.value)}
+                  disabled={!isEditing}
+                  className={cn(
+                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
+                    isEditing 
+                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
+                  )}
+                  placeholder="20-12345678-9"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Nombre del Estudio
+                </label>
+                <input
+                  type="text"
+                  value={formData.nombre_estudio}
+                  onChange={(e) => handleInputChange('nombre_estudio', e.target.value)}
+                  disabled={!isEditing}
+                  className={cn(
+                    "w-full px-3 py-2 border rounded-lg text-foreground transition-colors",
+                    isEditing 
+                      ? "bg-background border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      : "bg-secondary/20 border-secondary/30 cursor-not-allowed"
+                  )}
+                  placeholder="Estudio Jurídico Pérez & Asociados"
+                />
               </div>
             </div>
           </div>

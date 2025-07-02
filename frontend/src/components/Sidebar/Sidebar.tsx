@@ -32,7 +32,7 @@ interface ChatItem {
 
 export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: SidebarProps) {
   const { clear, initialize, loadMessages, state } = useChat();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isLoading: authLoading } = useAuth();
   const { getFolders, getSessions, createSession, updateSession, deleteSession, deleteSessionsBulk, moveSession, createFolder, deleteFolder } = useChatStorage();
   const [folders, setFolders] = useState<ChatFolder[]>([]);
   const [sessions, setSessions] = useState<{ [folderId: string]: ChatItem[] }>({});
@@ -159,7 +159,7 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
   useEffect(() => {
     let isMounted = true;
     
-    if (activeSection === 'chats' || isOpen) {
+    if ((activeSection === 'chats' || isOpen) && !authLoading && profile?.id) {
       loadFoldersAndSessions();
     }
     
@@ -168,9 +168,15 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
       isMounted = false;
       setIsLoading(false);
     };
-  }, [activeSection, isOpen]);
+  }, [activeSection, isOpen, authLoading, profile?.id]);
 
   const loadFoldersAndSessions = async () => {
+    // No cargar si el perfil no está disponible
+    if (authLoading || !profile?.id) {
+      console.log('⏳ Esperando perfil del usuario...');
+      return;
+    }
+
     setIsLoading(true);
     try {
       console.log('🔍 Cargando carpetas y sesiones...');
@@ -347,8 +353,19 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
       setNewFolderColor('#3B82F6');
       setShowCreateFolderModal(false);
       await loadFoldersAndSessions();
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error creating folder:', error);
+      
+      // Mostrar mensaje específico según el tipo de error
+      const errorMessage = error.message || 'Error desconocido al crear la carpeta';
+      
+      if (errorMessage.includes('El perfil se está cargando')) {
+        alert('⏳ El perfil se está cargando. Por favor, espera un momento e inténtalo de nuevo.');
+      } else if (errorMessage.includes('Perfil de usuario no encontrado')) {
+        alert('❌ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      } else {
+        alert(`❌ Error creando la carpeta: ${errorMessage}`);
+      }
     }
   };
 
@@ -384,8 +401,19 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
       await moveSession(sessionId, targetFolderId);
       setShowMoveModal(null);
       await loadFoldersAndSessions();
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error moving session:', error);
+      
+      // Mostrar mensaje específico según el tipo de error
+      const errorMessage = error.message || 'Error desconocido al mover la conversación';
+      
+      if (errorMessage.includes('El perfil se está cargando')) {
+        alert('⏳ El perfil se está cargando. Por favor, espera un momento e inténtalo de nuevo.');
+      } else if (errorMessage.includes('Perfil de usuario no encontrado')) {
+        alert('❌ Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      } else {
+        alert(`❌ Error moviendo la conversación: ${errorMessage}`);
+      }
     }
   };
 
@@ -684,18 +712,22 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
                 <div className="p-3 space-y-2">
                   <button
                     onClick={handleNewChat}
-                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-white/20 hover:bg-gray-500/10 transition-colors text-sm text-white group"
+                    disabled={authLoading || !profile?.id}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-white/20 hover:bg-gray-500/10 transition-colors text-sm text-white group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    title={authLoading ? "Cargando perfil..." : !profile?.id ? "Perfil no disponible" : "Crear nueva consulta"}
                   >
                     <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
-                    Nueva consulta
+                    {authLoading ? 'Cargando...' : 'Nueva consulta'}
                   </button>
                   
                   <button
                     onClick={() => setShowCreateFolderModal(true)}
-                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-purple-500/20 hover:bg-purple-500/10 transition-colors text-sm text-purple-300 group"
+                    disabled={authLoading || !profile?.id}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-purple-500/20 hover:bg-purple-500/10 transition-colors text-sm text-purple-300 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    title={authLoading ? "Cargando perfil..." : !profile?.id ? "Perfil no disponible" : "Crear nueva carpeta"}
                   >
                     <FolderPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                    Nueva carpeta
+                    {authLoading ? 'Cargando...' : 'Nueva carpeta'}
                   </button>
                 </div>
 
@@ -704,11 +736,12 @@ export function Sidebar({ isOpen, onToggle, activeSection, onSectionChange }: Si
                   {!selectionMode ? (
                     <button
                       onClick={toggleSelectionMode}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-orange-500/20 hover:bg-orange-500/10 transition-colors text-sm text-orange-300 group"
-                      disabled={getAllSessionsCount() === 0}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border border-orange-500/20 hover:bg-orange-500/10 transition-colors text-sm text-orange-300 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                      disabled={authLoading || !profile?.id || getAllSessionsCount() === 0}
+                      title={authLoading ? "Cargando perfil..." : !profile?.id ? "Perfil no disponible" : getAllSessionsCount() === 0 ? "No hay conversaciones" : "Seleccionar conversaciones"}
                     >
                       <CheckSquare className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      Seleccionar conversaciones
+                      {authLoading ? 'Cargando...' : 'Seleccionar conversaciones'}
                     </button>
                   ) : (
                     <div className="space-y-2">

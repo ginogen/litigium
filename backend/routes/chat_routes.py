@@ -69,6 +69,11 @@ class RespuestaChat(BaseModel):
     mostrar_preview: Optional[bool] = False
     mostrar_refrescar: Optional[bool] = False
 
+class ConfirmacionAbogado(BaseModel):
+    session_id: str
+    accion: str = Field(..., description="Acción: confirmar_generar, modificar_datos, cancelar")
+    datos_modificados: Optional[Dict] = Field(None, description="Datos modificados por el abogado")
+
 async def obtener_sesion_con_abogado_id(session_id: str, abogado_id: str) -> Dict:
     """Obtiene una sesión específica verificando que pertenezca al abogado."""
     try:
@@ -380,13 +385,34 @@ async def procesar_mensaje(
         print(f"🔍 Session ID: {mensaje.session_id}")
         print(f"🔍 Mensaje: {mensaje.mensaje[:100]}...")
         
-        # Obtener el perfil del abogado
+        # Obtener perfil del abogado con reintentos automáticos
         print("🔍 Buscando perfil de abogado para mensaje...")
-        abogado_response = supabase_admin.table('abogados')\
-            .select('*')\
-            .eq('user_id', current_user.id)\
-            .single()\
-            .execute()
+        try:
+            from supabase_integration import safe_supabase_query
+            
+            def consulta_abogado():
+                return supabase_admin.table('abogados')\
+                    .select('*')\
+                    .eq('user_id', current_user.id)\
+                    .single()\
+                    .execute()
+            
+            abogado_response = await safe_supabase_query(consulta_abogado)
+        except Exception as e:
+            print(f"❌ Error en consulta con reintentos: {e}")
+            # Fallback directo si los reintentos fallan
+            try:
+                abogado_response = supabase_admin.table('abogados')\
+                    .select('*')\
+                    .eq('user_id', current_user.id)\
+                    .single()\
+                    .execute()
+            except Exception as e2:
+                print(f"❌ Error en fallback directo: {e2}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"Error de conexión a la base de datos: {str(e2)}"
+                )
         
         if not abogado_response.data:
             raise HTTPException(status_code=404, detail="Perfil de abogado no encontrado")
@@ -542,9 +568,25 @@ async def procesar_mensaje(
             # Procesar mensaje con ChatAgent inteligente o función básica
             print("🔍 Procesando mensaje con IA...")
             
+            # IMPORTANTE: Actualizar el estado ANTES de procesar el mensaje
+            # Si el estado actual es "inicio", cambiarlo a "conversando" ANTES de procesar
+            if sesion.get('estado') == 'inicio':
+                print(f"🔄 Actualizando estado de sesión de 'inicio' a 'conversando' ANTES de procesar")
+                try:
+                    supabase_admin.table('chat_sesiones')\
+                        .update({'estado': 'conversando'})\
+                        .eq('id', sesion['id'])\
+                        .execute()
+                    print(f"✅ Estado de sesión actualizado a 'conversando'")
+                    
+                    # Actualizar el estado en la sesión local también
+                    sesion['estado'] = 'conversando'
+                except Exception as e:
+                    print(f"⚠️ Error actualizando estado de sesión: {e}")
+            
             if CHAT_AGENT_AVAILABLE:
                 try:
-                    chat_agent = get_chat_agent()
+                    chat_agent = get_chat_agent(user_id=current_user.id)
                     if not chat_agent:
                         raise Exception("ChatAgent no pudo inicializarse - verifique OPENAI_API_KEY")
                     
@@ -554,7 +596,7 @@ async def procesar_mensaje(
                         'tipo_demanda': sesion.get('tipo_demanda', ''),
                         'hechos_adicionales': sesion.get('hechos_adicionales', ''),
                         'notas_abogado': sesion.get('notas_abogado', ''),
-                        'estado': 'conversando',
+                        'estado': sesion.get('estado', 'inicio'),  # Usar el estado real de la sesión
                         'user_id': current_user.id  # NUEVO: Pasar user_id para contexto enriquecido
                     }
                     
@@ -567,7 +609,7 @@ async def procesar_mensaje(
                             sesion_adaptada['datos_cliente'] = {}
                     
                     print(f"🤖 Usando ChatAgent inteligente con OpenAI")
-                    respuesta_ia = chat_agent.procesar_mensaje(sesion_adaptada, mensaje.mensaje, mensaje.session_id)
+                    respuesta_ia = await chat_agent.procesar_mensaje(sesion_adaptada, mensaje.mensaje, mensaje.session_id)
                     
                     # Validar que la respuesta de la IA sea válida
                     if not respuesta_ia or not isinstance(respuesta_ia, dict):
@@ -606,6 +648,9 @@ async def procesar_mensaje(
                 respuesta_data.get("tipo_demanda"),
                 respuesta_data.get("hechos_adicionales")
             )
+        
+        # NOTA: El estado ya se actualizó ANTES de procesar el mensaje
+        # No es necesario actualizarlo nuevamente aquí
         
         # Guardar respuesta del bot en Supabase
         print("🔍 Guardando respuesta del bot...")
@@ -752,12 +797,13 @@ async def generar_demanda_endpoint(
                 
                 print(f"🔄 Generando demanda con IA para {solicitud.datos_cliente.nombre_completo}")
                 
-                resultado_demanda = generar_demanda(
+                resultado_demanda = await generar_demanda(
                     tipo_demanda=solicitud.tipo_demanda,
                     datos_cliente=solicitud.datos_cliente.dict(),
                     hechos_adicionales=solicitud.hechos_adicionales,
                     notas_abogado=solicitud.notas_abogado,
-                    user_id=current_user.id  # NUEVO: Pasar user_id para contexto enriquecido
+                    user_id=current_user.id,  # NUEVO: Pasar user_id para contexto enriquecido
+                    session_id=solicitud.session_id  # NUEVO: Pasar session_id para documentos consolidados
                 )
                 
                 if resultado_demanda.get("success"):
@@ -1230,4 +1276,99 @@ async def verificar_categorias_disponibles(
             "puede_crear_conversacion": False,
             "error": str(e),
             "mensaje": "Error verificando categorías disponibles"
-        } 
+        }
+
+@router.post("/confirmar-generacion")
+async def confirmar_generacion_demanda(
+    confirmacion: Dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Confirma la generación de una demanda después de revisar el resumen."""
+    try:
+        session_id = confirmacion.get("session_id")
+        accion = confirmacion.get("accion")  # "confirmar_generar", "modificar_datos", "cancelar"
+        datos_modificados = confirmacion.get("datos_modificados", {})
+        
+        if not session_id or not accion:
+            raise HTTPException(status_code=400, detail="session_id y accion son requeridos")
+        
+        # Obtener el perfil del abogado
+        abogado_response = supabase_admin.table('abogados')\
+            .select('*')\
+            .eq('user_id', current_user.id)\
+            .single()\
+            .execute()
+        
+        if not abogado_response.data:
+            raise HTTPException(status_code=404, detail="Perfil de abogado no encontrado")
+        
+        abogado_id = abogado_response.data['id']
+        
+        # Obtener sesión
+        sesion = await obtener_sesion_con_abogado_id(session_id, abogado_id)
+        
+        # Usar ChatAgent para procesar la confirmación
+        if CHAT_AGENT_AVAILABLE:
+            try:
+                chat_agent = get_chat_agent()
+                if not chat_agent:
+                    raise Exception("ChatAgent no pudo inicializarse")
+                
+                # Adaptar estructura de sesión para ChatAgent
+                sesion_adaptada = {
+                    'datos_cliente': sesion.get('cliente_datos', {}) if isinstance(sesion.get('cliente_datos'), dict) else {},
+                    'tipo_demanda': sesion.get('tipo_demanda', ''),
+                    'hechos_adicionales': sesion.get('hechos_adicionales', ''),
+                    'notas_abogado': sesion.get('notas_abogado', ''),
+                    'estado': sesion.get('estado', 'conversando'),
+                    'user_id': current_user.id
+                }
+                
+                # Procesar datos JSON si es string
+                if isinstance(sesion.get('cliente_datos'), str):
+                    import json
+                    try:
+                        sesion_adaptada['datos_cliente'] = json.loads(sesion.get('cliente_datos', '{}'))
+                    except:
+                        sesion_adaptada['datos_cliente'] = {}
+                
+                # Procesar confirmación
+                resultado = await chat_agent.procesar_confirmacion_abogado(
+                    sesion_adaptada, accion, session_id, datos_modificados
+                )
+                
+                # Actualizar sesión si es necesario
+                if accion == "confirmar_generar" and resultado.get("demanda_generada"):
+                    # La demanda se generó exitosamente
+                    await actualizar_datos_sesion(
+                        sesion['id'],
+                        sesion_adaptada.get('datos_cliente'),
+                        sesion_adaptada.get('tipo_demanda'),
+                        sesion_adaptada.get('hechos_adicionales')
+                    )
+                
+                return {
+                    "success": True,
+                    "session_id": session_id,
+                    "respuesta": resultado.get("mensaje", "Confirmación procesada"),
+                    "tipo": resultado.get("tipo", "bot"),
+                    "timestamp": resultado.get("timestamp", datetime.now().isoformat()),
+                    "demanda_generada": resultado.get("demanda_generada", False),
+                    "mostrar_preview": resultado.get("mostrar_preview", False),
+                    "mostrar_descarga": resultado.get("mostrar_descarga", False)
+                }
+                
+            except Exception as e:
+                print(f"❌ Error procesando confirmación con ChatAgent: {e}")
+                raise HTTPException(status_code=500, detail=f"Error procesando confirmación: {str(e)}")
+        else:
+            raise HTTPException(status_code=503, detail="ChatAgent no disponible")
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"❌ Error en confirmación: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error procesando confirmación: {str(e)}"
+        ) 

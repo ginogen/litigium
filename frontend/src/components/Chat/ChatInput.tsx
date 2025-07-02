@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useCanvas } from '../../contexts/CanvasContext';
 import { cn } from '@/utils';
-import { X, Edit3 } from 'lucide-react';
+import { X, Edit3, Image } from 'lucide-react';
 import { AudioRecorder } from './AudioRecorder';
 
 export function ChatInput() {
@@ -11,7 +11,9 @@ export function ChatInput() {
   const [inputValue, setInputValue] = useState('');
   const [selectedText, setSelectedText] = useState<string>('');
   const [audioError, setAudioError] = useState<string>('');
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Detectar texto seleccionado desde el Canvas
   useEffect(() => {
@@ -270,6 +272,63 @@ export function ChatInput() {
     setTimeout(() => setAudioError(''), 5000); // Limpiar error después de 5s
   }, []);
 
+  // Función para manejar upload de imágenes
+  const handleImageUpload = useCallback(async (files: FileList) => {
+    if (!state.sessionId || !state.isInitialized) {
+      console.log('🆕 No hay sesión activa, inicializando...');
+      await initialize();
+    }
+
+    setIsUploadingImages(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('session_id', state.sessionId!);
+      
+      // Agregar hasta 10 archivos
+      const fileArray = Array.from(files).slice(0, 10);
+      fileArray.forEach((file, index) => {
+        formData.append('files', file);
+        // Por defecto, todos son tipo "imagen_general"
+        formData.append('tipos_documento', 'imagen_general');
+      });
+
+      // Usar la instancia de api que tiene interceptors de autenticación
+      const { api } = await import('../../lib/api');
+      
+      const response = await api.post('/api/v1/chat/upload-images', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status === 200) {
+        const result = response.data;
+        console.log('✅ Imágenes subidas:', result);
+        
+        // Enviar mensaje automático indicando que se procesaron las imágenes
+        const message = `He subido ${fileArray.length} imagen(es) para procesar. ${result.message || ''}`;
+        await sendMessage(message);
+      } else {
+        throw new Error('Error subiendo imágenes');
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      // Enviar mensaje de error
+      await sendMessage('Error al procesar las imágenes. Por favor, inténtalo de nuevo.');
+    } finally {
+      setIsUploadingImages(false);
+      // Limpiar el input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [state.sessionId, state.isInitialized, initialize, sendMessage]);
+
+  const handleImageButtonClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   const getPlaceholder = () => {
     if (selectedText && canvasState.isOpen) {
       return "Describe cómo quieres modificar el texto seleccionado...";
@@ -354,6 +413,37 @@ export function ChatInput() {
           />
           
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-3">
+            {/* Input file oculto */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,.pdf,.doc,.docx"
+              onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+              className="hidden"
+            />
+            
+            {/* Botón de upload de imágenes */}
+            <button
+              type="button"
+              onClick={handleImageButtonClick}
+              disabled={state.isTyping || isUploadingImages}
+              className={cn(
+                "p-3 rounded-2xl transition-all duration-200 shadow-lg",
+                isUploadingImages
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-600 text-gray-300 hover:bg-gray-500 hover:text-white hover:shadow-xl hover:scale-105",
+                state.isTyping && "opacity-50 cursor-not-allowed"
+              )}
+              title="Subir imágenes o documentos"
+            >
+              {isUploadingImages ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Image className="w-5 h-5" />
+              )}
+            </button>
+
             {/* Botón de audio */}
             <AudioRecorder
               onTranscriptionComplete={handleAudioTranscription}
@@ -401,7 +491,7 @@ export function ChatInput() {
               <>
                 Presiona <kbd className="px-1.5 py-0.5 text-xs bg-gray-600 text-gray-200 rounded border border-gray-500">Enter</kbd> para enviar, 
                 <kbd className="px-1.5 py-0.5 text-xs bg-gray-600 text-gray-200 rounded border border-gray-500 ml-1">Shift + Enter</kbd> para nueva línea • 
-                🎤 Haz clic en el micrófono para grabar un mensaje de voz
+                🎤 Micrófono • 📷 Subir imágenes
               </>
             )}
           </p>

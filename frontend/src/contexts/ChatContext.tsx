@@ -267,14 +267,18 @@ export function ChatProvider({ children }: ChatProviderProps) {
       
       dispatch({ type: 'SET_SESSION_ID', payload: response.session_id });
       
-      // Mensaje de bienvenida con opciones basadas en categorías
-      const categoriasDisponibles = verificacion.categorias_disponibles.map(c => c.nombre).join(', ');
-      const welcomeMessage = `¡Hola! Soy tu asistente legal especializado.\n\n📋 **Categorías disponibles:** ${categoriasDisponibles}\n\n¿En qué tipo de demanda te puedo ayudar hoy?`;
-      
+      // Agregar mensaje inicial del bot automáticamente
       addMessage({
         type: 'bot',
-        text: welcomeMessage,
-        // Las opciones se generarán dinámicamente en MessageList basadas en las categorías
+        text: `¡Hola doctor! Soy su asistente legal inteligente. 🏛️
+
+**Para generar una demanda, puede:**
+
+📤 **Subir archivos:** telegramas, cartas documento, recibos, anotaciones, etc.
+💬 **Escribir detalles:** datos del cliente, hechos del caso, tipo de demanda
+🔄 **Combinar ambos:** La información se consolidará automáticamente
+
+¿Con qué tipo de caso necesita ayuda? Puede contarme los detalles o subir documentos directamente.`
       });
       
       dispatch({ type: 'SET_INITIALIZED', payload: true });
@@ -303,35 +307,102 @@ export function ChatProvider({ children }: ChatProviderProps) {
     // Si no hay sesión, inicializar primero
     if (!state.sessionId || !state.isInitialized) {
       console.log('🔄 Inicializando sesión antes de enviar mensaje...');
-      await initialize();
       
-      // Esperar un momento para que el estado se actualice
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    
-    // Verificar nuevamente después de initialize
-    if (!state.sessionId) {
-      console.error('❌ No se pudo obtener sessionId después de inicializar');
-      console.log('🔍 Estado actual:', { 
-        sessionId: state.sessionId, 
-        isInitialized: state.isInitialized 
-      });
-      
-      // Si falló la inicialización por falta de categorías, no mostrar error genérico
-      if (!state.isInitialized) {
+      // Llamar a initialize y capturar el sessionId directamente
+      try {
+        await initialize();
+        
+        // Obtener el sessionId directamente de la respuesta de initialize
+        const response = await chatAPI.iniciar();
+        if (response.session_id) {
+          console.log('✅ SessionId obtenido directamente:', response.session_id);
+          
+          // Usar el sessionId directamente sin depender del estado
+          const sessionIdToUse = response.session_id;
+          
+          console.log('📤 Enviando mensaje con sessionId directo:', sessionIdToUse);
+
+          // Agregar mensaje del usuario
+          let userMessage = text;
+          if (selectionContext) {
+            userMessage = `Contexto seleccionado: "${selectionContext.surroundingText.substring(
+              selectionContext.position.start, 
+              selectionContext.position.end
+            )}" | Instrucción: ${text}`;
+          }
+
+          addMessage({
+            type: 'user',
+            text: userMessage
+          });
+
+          // Determinar tipo de operación según el contexto
+          let operationType: 'writing' | 'generating' | 'editing' = 'writing';
+          
+          if (selectionContext) {
+            operationType = 'editing';
+          } else {
+            const isGenerationRequest = /\b(generar|crear|redactar|escribir|hacer).*demanda\b/i.test(text) ||
+                                        /\b(demanda|solicitud|escrito|documento).*(?:laboral|civil|penal)\b/i.test(text) ||
+                                        text.toLowerCase().includes('quiero una demanda') ||
+                                        text.toLowerCase().includes('necesito un escrito');
+            
+            if (isGenerationRequest) {
+              operationType = 'generating';
+            }
+          }
+
+          setTypingWithType(true, operationType);
+
+          try {
+            const response = await chatAPI.enviarMensaje(text, sessionIdToUse);
+            
+            setTypingWithType(false);
+
+            addMessage({
+              type: 'bot',
+              text: response.respuesta || 'Error: respuesta vacía del servidor',
+              options: response.opciones,
+              showDownload: response.mostrar_descarga,
+              showPreview: response.mostrar_preview,
+              showRefresh: response.mostrar_refrescar
+            });
+
+            if (response.mostrar_preview) {
+              console.log('🔍 Abriendo preview automáticamente para sessionId:', sessionIdToUse);
+              setTimeout(() => {
+                const event = new CustomEvent('openCanvas', { 
+                  detail: { mode: 'preview', sessionId: sessionIdToUse } 
+                });
+                window.dispatchEvent(event);
+              }, 500);
+            }
+          } catch (error) {
+            setTypingWithType(false);
+            console.error('❌ Error enviando mensaje:', error);
+            addMessage({
+              type: 'error',
+              text: 'Error enviando mensaje. Por favor, intenta de nuevo.'
+            });
+          }
+          
+          return; // Salir aquí para evitar el procesamiento normal
+        }
+      } catch (error) {
+        console.error('❌ Error en inicialización:', error);
         addMessage({
           type: 'error',
-          text: 'No se pudo establecer una sesión. El sistema parece no estar inicializado correctamente.'
+          text: 'Error al inicializar el chat. Por favor, recarga la página.'
         });
-      } else {
-        addMessage({
-          type: 'error',
-          text: 'Para enviar mensajes, primero necesitas configurar categorías y documentos en la sección "Entrenar".'
-        });
+        return;
       }
-      return;
     }
 
+    if (!state.sessionId) {
+      console.error('❌ sessionId es null - esto no debería pasar después de la inicialización');
+      return;
+    }
+    
     console.log('📤 Enviando mensaje con sessionId:', state.sessionId);
 
     // Agregar mensaje del usuario

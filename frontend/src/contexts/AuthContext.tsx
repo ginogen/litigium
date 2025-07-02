@@ -24,6 +24,7 @@ export const supabase = createClient(
 
 // Tipos
 export interface UserProfile {
+  // CAMPOS BÁSICOS EXISTENTES
   id: string;
   user_id: string;
   nombre_completo: string;
@@ -45,6 +46,19 @@ export interface UserProfile {
   created_at: string;
   updated_at: string;
   activo: boolean;
+  
+  // NUEVOS CAMPOS PARA WORKFLOW ABOGADO (TODOS OPCIONALES)
+  tomo?: string;
+  folio?: string;
+  condicion_fiscal?: string; // "Responsable Inscripto", "Monotributista", etc.
+  cuit?: string;
+  legajo?: string;
+  domicilio_legal?: string; // Diferente de domicilio_profesional
+  nombre_estudio?: string;
+  telefono_contacto?: string; // Para demandas (auto-rellena desde telefono)
+  email_contacto?: string; // Para demandas (auto-rellena desde email)
+  telefono_secundario?: string;
+  email_secundario?: string;
 }
 
 interface AuthState {
